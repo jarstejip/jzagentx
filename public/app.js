@@ -2009,3 +2009,87 @@ window.addEventListener('DOMContentLoaded', async () => {
     showToast('⚠️ Tidak dapat memeriksa status API');
   }
 });
+
+
+// ==================== MOBILE RESPONSIVE HANDLERS ====================
+
+// Mobile bottom tab bar navigation
+document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    
+    // Special "store" tab opens pricing modal
+    if (tab === 'store') {
+      document.getElementById('pricing-modal-overlay')?.classList.add('active');
+      return;
+    }
+
+    // Switch view
+    switchNavTab(tab);
+
+    // Update mobile tabs active state
+    document.querySelectorAll('.mobile-tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === tab);
+    });
+  });
+});
+
+// Sync desktop nav-tab clicks with mobile bottom tabs
+const origSwitchNavTab = switchNavTab;
+switchNavTab = function(tabName) {
+  origSwitchNavTab(tabName);
+  document.querySelectorAll('.mobile-tab-btn').forEach(b => {
+    if (b.dataset.tab === 'store') return; // skip store btn
+    b.classList.toggle('active', b.dataset.tab === tabName);
+  });
+};
+
+// Mobile IDE sidebar toggle
+const mobileSidebarOverlay = document.getElementById('mobile-sidebar-overlay');
+const ideSidebar = document.querySelector('.ide-sidebar');
+const mobileFilesBtn = document.getElementById('ide-mobile-files-btn');
+
+function toggleMobileSidebar() {
+  if (!ideSidebar) return;
+  const isOpen = ideSidebar.classList.contains('mobile-visible');
+  ideSidebar.classList.toggle('mobile-visible', !isOpen);
+  mobileSidebarOverlay?.classList.toggle('active', !isOpen);
+}
+
+function closeMobileSidebar() {
+  ideSidebar?.classList.remove('mobile-visible');
+  mobileSidebarOverlay?.classList.remove('active');
+}
+
+if (mobileFilesBtn) {
+  mobileFilesBtn.addEventListener('click', toggleMobileSidebar);
+}
+
+if (mobileSidebarOverlay) {
+  mobileSidebarOverlay.addEventListener('click', closeMobileSidebar);
+}
+
+// Close sidebar when a file is opened on mobile
+const origOpenFile = openFile;
+openFile = async function(relPath) {
+  await origOpenFile(relPath);
+  closeMobileSidebar();
+};
+
+// Auto-hide model label text on very narrow screens
+function handleResponsiveUpdates() {
+  const w = window.innerWidth;
+  
+  // Hide upgrade pill text if too narrow
+  const upgradePill = document.getElementById('open-pricing-btn');
+  if (upgradePill) {
+    if (w <= 360) {
+      upgradePill.querySelector('span').textContent = '⭐';
+    } else {
+      upgradePill.querySelector('span').textContent = '⭐ Upgrade';
+    }
+  }
+}
+
+window.addEventListener('resize', handleResponsiveUpdates);
+handleResponsiveUpdates();

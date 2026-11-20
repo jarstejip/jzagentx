@@ -18,23 +18,24 @@
       <div class="nav-left">
         <div class="brand-logo">
           <div class="brand-icon">JZ</div>
-          <span>JZAGENTIC</span>
+          <span class="brand-title">JZAGENTIC</span>
         </div>
-        <nav class="nav-tabs">
-          <button class="nav-tab-btn active" data-tab="agent">
-            <span>⚡</span> Agent
-          </button>
-          <button class="nav-tab-btn" data-tab="chatbot">
-            <span>💬</span> Chatbot
-          </button>
-          <button class="nav-tab-btn" data-tab="ide">
-            <span>💻</span> IDE Editor
-          </button>
-          <button class="nav-tab-btn" data-tab="ecosystem">
-            <span>🌐</span> Ecosystem & MCP Hub
-          </button>
-        </nav>
       </div>
+
+      <nav class="nav-tabs">
+        <button class="nav-tab-btn active" data-tab="agent">
+          <span>⚡</span> <span class="tab-text">Agent</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="chatbot">
+          <span>💬</span> <span class="tab-text">Chatbot</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="ide">
+          <span>💻</span> <span class="tab-text">IDE Editor</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="ecosystem">
+          <span>🌐</span> <span class="tab-text">Ecosystem</span>
+        </button>
+      </nav>
 
       <div class="nav-right">
         <!-- Active Model Pill -->
@@ -172,6 +173,9 @@
             <span class="ide-sub-tag">Edit & Kustomisasi Script Secara Real-Time</span>
           </div>
           <div class="ide-controls">
+            <button class="ide-btn" id="ide-mobile-files-btn" style="display:none;" title="Lihat Daftar File">
+              <span>📁</span> Files
+            </button>
             <button class="ide-btn run" id="ide-run-btn" title="Jalankan Script atau Tampilkan Web">
               <span>▶</span> Run
             </button>
@@ -781,6 +785,35 @@ loading...
 
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toast-container"></div>
+
+  <!-- Mobile Sidebar Overlay (for IDE file tree) -->
+  <div class="mobile-sidebar-overlay" id="mobile-sidebar-overlay"></div>
+
+  <!-- Mobile Bottom Tab Bar -->
+  <nav class="mobile-bottom-tabs" id="mobile-bottom-tabs">
+    <div class="mobile-tabs-row">
+      <button class="mobile-tab-btn active" data-tab="agent">
+        <span class="mobile-tab-icon">⚡</span>
+        <span>Agent</span>
+      </button>
+      <button class="mobile-tab-btn" data-tab="chatbot">
+        <span class="mobile-tab-icon">💬</span>
+        <span>Chatbot</span>
+      </button>
+      <button class="mobile-tab-btn" data-tab="ide">
+        <span class="mobile-tab-icon">💻</span>
+        <span>IDE</span>
+      </button>
+      <button class="mobile-tab-btn" data-tab="ecosystem">
+        <span class="mobile-tab-icon">🌐</span>
+        <span>Ecosystem</span>
+      </button>
+      <button class="mobile-tab-btn" data-tab="store" id="mobile-store-btn">
+        <span class="mobile-tab-icon">💎</span>
+        <span>Store</span>
+      </button>
+    </div>
+  </nav>
 
   <!-- App Script -->
   <script src="/app.js"></script>
