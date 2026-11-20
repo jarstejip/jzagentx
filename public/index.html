@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JZAGENTIC - Autonomous AI Agent & IDE Ecosystem (Unlimited)</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Animated Background Canvas -->
+  <canvas id="stars-canvas"></canvas>
+
+  <div id="app">
+    <!-- Navbar -->
+    <header class="navbar">
+      <div class="nav-left">
+        <div class="brand-logo">
+          <div class="brand-icon">JZ</div>
+          <span>JZAGENTIC</span>
+        </div>
+        <nav class="nav-tabs">
+          <button class="nav-tab-btn active" data-tab="agent">
+            <span>⚡</span> Agent
+          </button>
+          <button class="nav-tab-btn" data-tab="chatbot">
+            <span>💬</span> Chatbot
+          </button>
+          <button class="nav-tab-btn" data-tab="ide">
+            <span>💻</span> IDE Editor
+          </button>
+          <button class="nav-tab-btn" data-tab="ecosystem">
+            <span>🌐</span> Ecosystem & MCP Hub
+          </button>
+        </nav>
+      </div>
+
+      <div class="nav-right">
+        <!-- Active Model Pill -->
+        <div class="model-pill" id="open-models-btn" title="Ganti Model AI">
+          <span>👑</span>
+          <span id="active-model-label">Claude 3.7 Sonnet</span>
+          <span style="font-size: 0.65rem;">▼</span>
+        </div>
+        
+        <!-- Unlimited Tokens Live Badge -->
+        <div class="unlimited-badge" id="token-counter-badge" title="Real-Time Token Metering">
+          <span>♾️ UNLIMITED • 0 Tokens Digunakan</span>
+        </div>
+
+        <button class="icon-btn" id="open-api-keys-btn" title="Konfigurasi API Keys (OpenRouter, OpenAI, Anthropic, Ollama)">🔑</button>
+        <button class="icon-btn" id="toggle-fullscreen" title="Layar Penuh">⛶</button>
+      </div>
+    </header>
+
+    <!-- Main Viewport Area -->
+    <main class="main-viewport">
+      
+      <!-- ==================== VIEW 1: AGENT & CHATBOT (Gemini Style) ==================== -->
+      <section class="view-section active" id="view-agent">
+        <div class="gemini-container">
+          <!-- Scrollable Message Area -->
+          <div class="gemini-scroll-area" id="gemini-scroll-area">
+            <!-- Gemini Welcome Hero -->
+            <div class="gemini-welcome" id="gemini-welcome">
+              <div class="gemini-sparkle-icon">✦</div>
+              <h1 class="gemini-greeting">Halo, Developer</h1>
+              <p class="gemini-subtext">Apa yang ingin Anda bangun atau teliti hari ini?</p>
+
+              <div class="gemini-badges-row">
+                <span class="gemini-pill-badge">✦ JZAGENTIC AI</span>
+                <span class="gemini-pill-badge">⚡ Unlimited Plan</span>
+                <span class="gemini-pill-badge">🔓 Developer Mode</span>
+              </div>
+
+              <!-- Quick Prompt Cards (Gemini Style) -->
+              <div class="gemini-prompt-cards">
+                <div class="gemini-card" data-prompt="Rancang arsitektur backend payment gateway dengan load balancing dan high concurrency di Node.js">
+                  <div class="card-icon">⚡</div>
+                  <div class="card-title">Arsitektur Backend</div>
+                  <div class="card-desc">Payment gateway & high concurrency</div>
+                </div>
+                <div class="gemini-card" data-prompt="Refactor dan audit keamanan kode landing.php dengan best practice PHP 8 strict types">
+                  <div class="card-icon">💻</div>
+                  <div class="card-title">Refactor & Audit Script</div>
+                  <div class="card-desc">Audit keamanan & strict types</div>
+                </div>
+                <div class="gemini-card" data-prompt="Analisis teknis infrastruktur reverse proxy, CDN, DNS sinkholing, dan proteksi WAF">
+                  <div class="card-icon">🔒</div>
+                  <div class="card-title">Infrastruktur & Jaringan</div>
+                  <div class="card-desc">Reverse proxy, CDN, & proteksi WAF</div>
+                </div>
+                <div class="gemini-card" data-prompt="Jelaskan cara kerja MCP (Model Context Protocol) dan buatkan contoh implementasinya">
+                  <div class="card-icon">🔌</div>
+                  <div class="card-title">MCP & Tools Integration</div>
+                  <div class="card-desc">Integrasi tools & otomasi AI</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Chat Feed -->
+            <div class="chat-feed" id="chat-feed-container"></div>
+          </div>
+
+          <!-- Bottom Pinned Gemini Prompt Input -->
+          <div class="gemini-bottom-bar">
+            <!-- Mode Status Indicator (Agent vs Chatbot) -->
+            <div class="mode-status-indicator" id="mode-status-indicator">
+              <span class="mode-indicator-dot"></span>
+              <span id="mode-indicator-text">⚡ Mode Agen Otonom: Terhubung ke Workspace &amp; Memantau File Aktif (<code id="agent-active-file-pill">testing.html</code>)</span>
+            </div>
+
+            <div class="gemini-input-wrapper">
+              <div class="gemini-input-top">
+                <div class="quick-commands" id="quick-commands-bar">
+                  <button class="command-pill" data-cmd="/code">/code</button>
+                  <button class="command-pill" data-cmd="/audit">/audit</button>
+                  <button class="command-pill" data-cmd="/refactor">/refactor</button>
+                  <button class="command-pill" data-cmd="/database">/database</button>
+                  <button class="command-pill" data-cmd="/mcp">/mcp</button>
+                </div>
+              </div>
+
+              <div class="gemini-input-row">
+                <textarea 
+                  id="hero-chat-input" 
+                  class="chat-textarea gemini-textarea" 
+                  placeholder="Instruksikan Agent untuk memodifikasi kode atau tanya apa saja..."
+                  rows="1"
+                ></textarea>
+                <button class="gemini-send-btn" id="hero-send-btn" title="Kirim pesan">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="gemini-disclaimer">
+              <span id="gemini-disclaimer-text">✦ JZAGENTIC AI • Unlimited Plan • Real-Time Token Metering • Developer Mode</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Quick Scroll Button -->
+        <button class="scroll-to-search-btn" id="scroll-to-search-btn" title="Scroll ke bawah">
+          <span>⬇️</span>
+          <span>Ke Bawah</span>
+        </button>
+      </section>
+
+      <!-- ==================== VIEW 2: IDE / CODE EDITOR (Screenshot 2 & 3) ==================== -->
+      <section class="view-section" id="view-ide">
+        <!-- Top Ribbon -->
+        <div class="ide-top-ribbon">
+          <div class="ide-feature-tag">
+            <span class="ide-feature-badge">FITUR 1: IDE / CODE EDITOR</span>
+            <span class="ide-sub-tag">Edit & Kustomisasi Script Secara Real-Time</span>
+          </div>
+          <div class="ide-controls">
+            <button class="ide-btn run" id="ide-run-btn" title="Jalankan Script atau Tampilkan Web">
+              <span>▶</span> Run
+            </button>
+            <button class="ide-btn" id="ide-preview-btn" title="Buka Pratinjau Tampilan Web">
+              <span>🌐</span> Preview Web
+            </button>
+            <button class="ide-btn" id="ide-split-btn" title="Tampilan Split / Berdampingan">
+              <span>◫</span> Split
+            </button>
+            <button class="ide-btn" id="ide-terminal-toggle">
+              <span>&gt;_</span> Terminal
+            </button>
+            <button class="ide-btn" id="ide-agent-toggle">
+              <span>🤖</span> Agent Chat
+            </button>
+          </div>
+        </div>
+
+        <div class="ide-layout">
+          <!-- Activity Bar -->
+          <div class="ide-activity-bar">
+            <button class="activity-btn active" title="Explorer">📁</button>
+            <button class="activity-btn" title="Search">🔍</button>
+            <button class="activity-btn" title="Source Control">🌿</button>
+            <button class="activity-btn" title="MCP Hub" onclick="switchNavTab('ecosystem')">🔌</button>
+            <button class="activity-btn" title="API Keys & Settings" onclick="openApiModal()">⚙️</button>
+          </div>
+
+          <!-- File Explorer Sidebar -->
+          <div class="ide-sidebar">
+            <div class="sidebar-header">
+              <span>TESTING WORKSPACE</span>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <span style="cursor:pointer;" id="create-file-btn" title="Buat File Baru">📄+</span>
+                <span style="cursor:pointer;" id="refresh-files-btn" title="Refresh">🔄</span>
+              </div>
+            </div>
+            <div class="file-tree" id="file-tree-container">
+              <!-- Dynamically populated from /api/files -->
+            </div>
+          </div>
+
+          <!-- Main Code Editor & Preview Area -->
+          <div class="ide-main" id="ide-main-container">
+            <!-- Tabs -->
+            <div class="editor-tabs" id="editor-tabs-bar">
+              <div class="editor-tab active" id="active-tab-indicator">
+                <span id="active-tab-name">playground.js</span>
+                <span class="tab-close">✕</span>
+              </div>
+              <button class="tab-preview-pill" id="quick-preview-tab-btn" title="Tampilkan Halaman Web Langsung">
+                <span>🌐</span> Web Preview
+              </button>
+            </div>
+
+            <!-- Workspace Body: Split container for Code + Live Web Preview -->
+            <div class="ide-workspace-body" id="ide-workspace-body">
+              <!-- Code Area with Line Numbers -->
+              <div class="code-editor-container" id="code-editor-box">
+                <div class="line-numbers" id="line-numbers-col">1</div>
+                <textarea class="editor-textarea" id="main-editor-area" spellcheck="false"></textarea>
+              </div>
+
+              <!-- Embedded Live Web Browser Frame -->
+              <div class="live-preview-pane" id="live-preview-pane" style="display:none;">
+                <div class="preview-browser-bar">
+                  <div class="browser-dots">
+                    <span class="b-dot red"></span>
+                    <span class="b-dot yellow"></span>
+                    <span class="b-dot green"></span>
+                  </div>
+                  <div class="preview-address-bar">
+                    <span style="font-size:0.75rem; color:#71717a;">🔒</span>
+                    <span id="preview-url-text">http://localhost:3333/preview/testing.html</span>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                      <button class="preview-tool-btn" id="preview-refresh-btn" title="Muat Ulang Halaman Web">🔄</button>
+                      <button class="preview-tool-btn" id="preview-external-btn" title="Buka di Tab Baru">↗</button>
+                      <button class="preview-tool-btn" id="preview-close-btn" title="Tutup Preview">✕</button>
+                    </div>
+                  </div>
+                </div>
+                <iframe id="live-preview-iframe" class="live-preview-iframe" src="about:blank"></iframe>
+              </div>
+            </div>
+
+            <!-- Bottom Terminal Drawer -->
+            <div class="ide-terminal-drawer" id="terminal-drawer">
+              <div class="terminal-header">
+                <span>TERMINAL - JZAGENTIC REAL-TIME CORE</span>
+                <span style="cursor:pointer;" id="clear-term-btn">Clear</span>
+              </div>
+              <div class="terminal-logs" id="terminal-logs-view">
+[JZAGENTIC Shell] System initialized. Unlimited 1B tokens/day engine streaming ready.
+              </div>
+            </div>
+          </div>
+
+          <!-- Embedded Right Side Agent Panel -->
+          <div class="ide-agent-panel" id="ide-agent-panel">
+            <div class="agent-panel-header">
+              <span>⚡ AGENT SCRIPT ASSISTANT</span>
+              <span id="agent-mini-model" style="font-size:0.7rem; color:#94a3b8;">Claude 3.7 Sonnet</span>
+            </div>
+            <div class="agent-panel-content" id="ide-agent-messages">
+              <div class="chat-card agent">
+                <div class="chat-header">JZAGENTIC Assistant (Streaming Ready)</div>
+                <div class="chat-body">Saya siap mengedit atau merefaktor script <code id="context-file-tag">playground.js</code> secara real-time. Beritahu saya apa yang ingin Anda modifikasi!</div>
+              </div>
+            </div>
+            <div class="agent-panel-input">
+              <textarea id="ide-agent-prompt" class="chat-textarea" placeholder="Instruksi modifikasi script..." rows="2" style="font-size:0.82rem;"></textarea>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button class="btn-small" id="ide-quick-refactor">⚡ Auto-Refactor</button>
+                <button class="chat-send-btn" id="ide-agent-send" style="padding:4px 12px; font-size:0.8rem;">Kirim Real-Time</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 3: ECOSYSTEM & MCP HUB (Screenshot 1) ==================== -->
+      <section class="view-section" id="view-ecosystem">
+        <div class="eco-header">
+          <div class="eco-title-row">
+            <div class="eco-icon-badge">X</div>
+            <h2 class="eco-title">Ecosystem & MCP Hub | Production Architecture</h2>
+          </div>
+          <div class="eco-subtitle">Transparency & MCP Hub in admin omnilux power bplication diode</div>
+        </div>
+
+        <!-- Ecosystem Tabs -->
+        <div class="eco-tabs-bar">
+          <button class="eco-tab" data-ecotab="mcp">
+            <span>🔌</span> MCP Servers
+          </button>
+          <button class="eco-tab" data-ecotab="plugins">
+            <span>🧩</span> Plugins
+          </button>
+          <button class="eco-tab" data-ecotab="skills">
+            <span>✨</span> Skills
+          </button>
+          <button class="eco-tab" data-ecotab="lsp">
+            <span>⚡</span> LSP Services
+          </button>
+          <button class="eco-tab active" data-ecotab="mirror">
+            <span>📱</span> Mobile Mirror
+          </button>
+        </div>
+
+        <!-- Mobile Mirror Sub-View -->
+        <div class="eco-subview active" id="ecoview-mirror">
+          <div class="mobile-mirror-grid">
+            <!-- Left Control Card -->
+            <div class="mirror-control-card">
+              <div class="platform-selector">
+                <div class="platform-box active" id="platform-android" onclick="selectMobilePlatform('android')">
+                  <div class="icon">🤖</div>
+                  <div>
+                    <div class="title">Android (.APK Native)</div>
+                    <div class="sub">Chrome / PWA Native</div>
+                  </div>
+                </div>
+                <div class="platform-box" id="platform-ios" onclick="selectMobilePlatform('ios')">
+                  <div class="icon">🍎</div>
+                  <div>
+                    <div class="title">Apple iOS (Safari Web)</div>
+                    <div class="sub">Safari Web App PWA</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dynamic Platform Instructions Box -->
+              <div class="mirror-banner-box" id="platform-instructions-box">
+                <h4 id="platform-banner-title">🤖 Android Native Companion</h4>
+                <p id="platform-banner-desc" style="font-size:0.82rem; line-height:1.5; color:#cbd5e1; margin-top:4px;">
+                  Buka link menggunakan <strong>Google Chrome</strong> di HP Android Anda, lalu pilih <strong>"Install Aplikasi"</strong> pada menu titik tiga (⋮) untuk menjadikannya aplikasi native di home screen.
+                </p>
+              </div>
+
+              <!-- IP & Link Quick Bar -->
+              <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <div style="font-size:0.75rem; color:#94a3b8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                  <span>Wi-Fi LAN IP: </span><strong id="lan-ip-display" style="color:#38bdf8; font-family:var(--font-mono);">192.168.1.7:3333</strong>
+                </div>
+                <button class="btn-small" onclick="copyMobileUrl()" style="flex-shrink:0;">📋 Salin Link</button>
+              </div>
+
+              <div class="mirror-actions-row">
+                <button class="btn-mirror-apk" id="download-apk-btn">
+                  <span id="btn-action-icon">📥</span> <span id="btn-action-label">Unduh .APK Launcher</span>
+                </button>
+                <button class="btn-mirror-qr" id="scan-qr-btn">
+                  <span>📱</span> Buka di Layar HP
+                </button>
+              </div>
+
+              <div style="text-align: center; margin-top: 10px;">
+                <span style="font-size: 0.72rem; letter-spacing: 2px; color: #64748b; font-weight: 800;">SYNC DUA ARAH REAL-TIME (ANDROID &amp; IPHONE)</span>
+              </div>
+            </div>
+
+            <!-- Right Smartphone Mockup -->
+            <div>
+              <div class="smartphone-frame">
+                <div class="phone-notch"></div>
+                <div class="phone-screen">
+                  <div class="phone-header">
+                    <span>&lt; JZAGENTIC Mirror</span>
+                    <span id="phone-status-dot" style="color:#10b981;">● Live Sync (Unlimited)</span>
+                  </div>
+                  <div class="phone-editor-preview" id="phone-live-code">
+// Live Mirrored Code
+loading...
+                  </div>
+                  <div class="phone-footer">
+                    <div class="phone-qr-box" id="phone-qr-canvas-box">
+                      <img id="mirror-qr-img" style="width:120px; height:120px; display:block;" alt="QR Code" />
+                    </div>
+                    <div style="font-size:0.65rem; text-align:center; color:#94a3b8;">
+                      Buka di browser HP: <br><strong id="mobile-url-display" style="color:#38bdf8;">http://localhost:3333/mobile</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MCP Servers Sub-View -->
+        <div class="eco-subview" id="ecoview-mcp" style="display:none;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;" id="mcp-servers-grid"></div>
+        </div>
+
+        <!-- Skills Sub-View -->
+        <div class="eco-subview" id="ecoview-skills" style="display:none;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;" id="skills-grid"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ==================== VIEW 4: AI MODELS MODAL (Screenshot 4) ==================== -->
+  <div class="modal-overlay" id="models-modal-overlay">
+    <div class="models-modal">
+      <div class="models-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <h3>AI MODELS</h3>
+          <span style="font-size:0.75rem; background:rgba(16,185,129,0.2); color:#34d399; padding:2px 8px; border-radius:12px; border:1px solid rgba(16,185,129,0.4);">
+            ● All Real-Time Stream Ready (Unlimited)
+          </span>
+        </div>
+        <button class="icon-btn" id="close-models-btn" style="font-size:1.2rem;">✕</button>
+      </div>
+      <div class="models-grid" id="models-catalog-container"></div>
+    </div>
+  </div>
+
+  <!-- ==================== VIEW 5: API KEYS & CUSTOM UPSTREAM MODAL ==================== -->
+  <div class="modal-overlay" id="api-modal-overlay">
+    <div class="models-modal" style="max-width: 600px;">
+      <div class="models-header">
+        <h3>🔑 API KEYS & REAL-TIME PROVIDER CONFIG</h3>
+        <button class="icon-btn" id="close-api-btn" style="font-size:1.2rem;">✕</button>
+      </div>
+      <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+        <div id="api-key-status-box" style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-radius:10px; padding:12px; margin-bottom:8px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+            <span style="font-size:1.1rem;">⚠️</span>
+            <strong style="color:#fbbf24; font-size:0.9rem;">Status: Memuat...</strong>
+          </div>
+          <p style="font-size:0.8rem; color:#94a3b8; margin:0;">Memeriksa koneksi API key...</p>
+        </div>
+
+        <p style="font-size:0.85rem; color:#94a3b8;">
+          Masukkan minimal <strong>satu</strong> API Key untuk mengaktifkan AI real-time:
+          <br>• <strong>Google Gemini API</strong>: Gratis tanpa kartu kredit di <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#38bdf8;">aistudio.google.com</a>
+          <br>• <strong>OpenRouter</strong>: 1 key untuk semua model (Claude, GPT, Grok, DeepSeek) di <a href="https://openrouter.ai" target="_blank" style="color:#38bdf8;">openrouter.ai</a>
+        </p>
+
+        <div>
+          <label style="font-size:0.8rem; color:#34d399; font-weight:700; display:block; margin-bottom:4px;">✨ Google Gemini API Key (Paling Cepat & Gratis):</label>
+          <input type="password" id="input-gemini-key" class="chat-textarea" style="width:100%; height:38px; min-height:unset; padding:8px 12px; font-size:0.85rem; background:#07090e; border:1px solid #10b981; border-radius:6px;" placeholder="AIzaSy...">
+        </div>
+
+        <div>
+          <label style="font-size:0.8rem; color:#cbd5e1; display:block; margin-bottom:4px;">OpenRouter API Key (Claude, GPT, DeepSeek, Qwen):</label>
+          <input type="password" id="input-openrouter-key" class="chat-textarea" style="width:100%; height:38px; min-height:unset; padding:8px 12px; font-size:0.85rem; background:#07090e; border:1px solid #334155; border-radius:6px;" placeholder="sk-or-v1-...">
+        </div>
+
+        <div>
+          <label style="font-size:0.8rem; color:#cbd5e1; display:block; margin-bottom:4px;">OpenAI API Key (GPT-4 / GPT-5):</label>
+          <input type="password" id="input-openai-key" class="chat-textarea" style="width:100%; height:38px; min-height:unset; padding:8px 12px; font-size:0.85rem; background:#07090e; border:1px solid #334155; border-radius:6px;" placeholder="sk-...">
+        </div>
+
+        <div>
+          <label style="font-size:0.8rem; color:#cbd5e1; display:block; margin-bottom:4px;">Anthropic API Key (Claude Models):</label>
+          <input type="password" id="input-anthropic-key" class="chat-textarea" style="width:100%; height:38px; min-height:unset; padding:8px 12px; font-size:0.85rem; background:#07090e; border:1px solid #334155; border-radius:6px;" placeholder="sk-ant-...">
+        </div>
+
+        <div>
+          <label style="font-size:0.8rem; color:#cbd5e1; display:block; margin-bottom:4px;">DeepSeek API Key:</label>
+          <input type="password" id="input-deepseek-key" class="chat-textarea" style="width:100%; height:38px; min-height:unset; padding:8px 12px; font-size:0.85rem; background:#07090e; border:1px solid #334155; border-radius:6px;" placeholder="sk-...">
+        </div>
+
+        <div>
+          <label style="font-size:0.8rem; color:#cbd5e1; display:block; margin-bottom:4px;">Local Ollama Endpoint (100% Free & Unlimited Offline):</label>
+          <input type="text" id="input-ollama-url" class="chat-textarea" style="width:100%; height:38px; min-height:unset; padding:8px 12px; font-size:0.85rem; background:#07090e; border:1px solid #334155; border-radius:6px;" value="http://127.0.0.1:11434">
+        </div>
+
+        <div>
+          <label style="font-size:0.8rem; color:#f59e0b; font-weight:700; display:block; margin-bottom:4px;">🦙 Ollama Model Name (100% tanpa filter — dolphin-mixtral, nous-hermes, llama3.1):</label>
+          <input type="text" id="input-ollama-model" class="chat-textarea" style="width:100%; height:38px; min-height:unset; padding:8px 12px; font-size:0.85rem; background:#07090e; border:1px solid #f59e0b; border-radius:6px;" placeholder="dolphin-mixtral atau nous-hermes-2-mixtral">
+          <p style="font-size:0.72rem; color:#94a3b8; margin:4px 0 0 0;">Install: <code style="color:#38bdf8;">ollama pull dolphin-mixtral</code> → model ini 100% uncensored tanpa filter apapun</p>
+        </div>
+
+        <button class="chat-send-btn" id="save-api-keys-btn" style="align-self:flex-end; padding:10px 20px;">
+          Simpan Konfigurasi
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- App Script -->
+  <script src="/app.js"></script>
+</body>
+</html>

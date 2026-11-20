@@ -1,0 +1,13 @@
+{
+  "name": "jzagentic",
+  "version": "1.0.0",
+  "description": "JZAGENTIC - Autonomous AI Agent & IDE Ecosystem Hub",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

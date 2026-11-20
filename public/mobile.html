@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>JZAGENTIC Mobile Companion</title>
+  
+  <!-- Progressive Web App Meta for Android & iOS -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="JZAGENTIC">
+  <meta name="theme-color" content="#07090e">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="apple-touch-icon" href="/icon.svg">
+
+  <style>
+    :root {
+      --bg: #07090e;
+      --card: #0d121f;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #38bdf8;
+      --green: #10b981;
+      --red: #ef4444;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* Top App Header */
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      letter-spacing: 0.5px;
+    }
+    .brand-badge {
+      background: #ffffff;
+      color: #000000;
+      font-weight: 900;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 5px;
+      letter-spacing: -0.5px;
+    }
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--green);
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .header-status.disconnected {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    /* Tabs Bar */
+    .tabs {
+      display: flex;
+      background: #04060a;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px 6px;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    /* Content Area */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .view-pane {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      padding: 12px;
+      overflow-y: auto;
+    }
+    .view-pane.active {
+      display: flex;
+    }
+
+    /* File Bar */
+    .file-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+    .file-select {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-family: var(--mono);
+      outline: none;
+      flex: 1;
+    }
+    .copy-btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Code Viewer */
+    .code-viewer {
+      flex: 1;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: #040711;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 10px;
+      padding: 12px;
+      line-height: 1.5;
+      overflow-y: auto;
+      user-select: text;
+    }
+
+    /* Chat Section */
+    .chat-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 10px;
+    }
+    .chat-bubble {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      line-height: 1.45;
+      max-width: 90%;
+      word-break: break-word;
+    }
+    .chat-bubble.user {
+      background: #2563eb;
+      color: #ffffff;
+      align-self: flex-end;
+      border-bottom-right-radius: 3px;
+    }
+    .chat-bubble.agent {
+      background: var(--card);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #e2e8f0;
+      align-self: flex-start;
+      border-bottom-left-radius: 3px;
+    }
+    .chat-meta {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Chat Input Footer */
+    .mobile-footer {
+      padding: 8px 12px;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .chat-input {
+      flex: 1;
+      background: #07090e;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #fff;
+      padding: 10px 12px;
+      font-size: 0.88rem;
+      outline: none;
+    }
+    .chat-input:focus {
+      border-color: var(--accent);
+    }
+    .send-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    /* Web Preview Iframe */
+    .preview-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #ffffff;
+      border-radius: 8px;
+    }
+
+    /* Install Guide Card */
+    .guide-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .guide-card h3 {
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+    }
+    .guide-card ol {
+      padding-left: 20px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .guide-card li { margin-bottom: 6px; }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      align-self: flex-start;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <!-- Top App Header -->
+  <header>
+    <div class="brand">
+      <span class="brand-badge">JZ</span>
+      <span>JZAGENTIC</span>
+    </div>
+    <div class="header-status" id="live-status-pill">
+      <span class="status-dot"></span>
+      <span id="live-status-text">● Live Sync</span>
+    </div>
+  </header>
+
+  <!-- 3 Main Tabs -->
+  <div class="tabs">
+    <div class="tab active" id="tab-btn-code" onclick="switchTab('code')">
+      <span>📄</span> Live Code
+    </div>
+    <div class="tab" id="tab-btn-chat" onclick="switchTab('chat')">
+      <span>💬</span> AI Agent
+    </div>
+    <div class="tab" id="tab-btn-preview" onclick="switchTab('preview')">
+      <span>🌐</span> Preview
+    </div>
+    <div class="tab" id="tab-btn-install" onclick="switchTab('install')">
+      <span>📲</span> Install
+    </div>
+  </div>
+
+  <!-- Content Panes -->
+  <main class="content-area">
+    <!-- PANE 1: LIVE CODE -->
+    <div class="view-pane active" id="pane-code">
+      <div class="file-bar">
+        <select class="file-select" id="file-dropdown" onchange="onFileDropdownChange(this.value)">
+          <option value="playground.js">playground.js</option>
+          <option value="testing.html">testing.html</option>
+        </select>
+        <button class="copy-btn" onclick="copyCurrentCode()">📋 Salin</button>
+      </div>
+      <pre class="code-viewer" id="mobile-code-viewer">// Memuat sinkronisasi kode dari desktop IDE...</pre>
+    </div>
+
+    <!-- PANE 2: AI AGENT CHAT -->
+    <div class="view-pane" id="pane-chat">
+      <div class="chat-list" id="chat-list">
+        <div class="chat-bubble agent">
+          <div class="chat-meta">✦ JZAGENTIC Companion • Live</div>
+          Terkoneksi langsung ke AI IDE desktop Anda. Ajukan pertanyaan, minta buatkan script, atau berikan perintah revisi langsung dari smartphone!
+        </div>
+      </div>
+      <div class="typing-indicator" id="typing-indicator">
+        <span>AI sedang mengetik...</span>
+      </div>
+      <footer class="mobile-footer" style="margin-top:auto;">
+        <input type="text" class="chat-input" id="mobile-chat-input" placeholder="Tanya AI atau minta buatkan kode..." onkeydown="if(event.key==='Enter') sendChatPrompt()">
+        <button class="send-btn" onclick="sendChatPrompt()">Kirim</button>
+      </footer>
+    </div>
+
+    <!-- PANE 3: WEB PREVIEW -->
+    <div class="view-pane" id="pane-preview">
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+        <span>Live Web Preview (<span id="preview-filename">testing.html</span>)</span>
+        <button class="copy-btn" onclick="refreshPreview()">🔄 Refresh</button>
+      </div>
+      <iframe class="preview-frame" id="mobile-preview-frame" src="/preview/testing.html"></iframe>
+    </div>
+
+    <!-- PANE 4: INSTALL GUIDE FOR ANDROID & IPHONE -->
+    <div class="view-pane" id="pane-install">
+      <div class="guide-card">
+        <h3>🤖 Cara Pasang di Android (Chrome / Brave)</h3>
+        <ol>
+          <li>Buka menu titik tiga <strong>(⋮)</strong> di pojok kanan atas browser Google Chrome.</li>
+          <li>Pilih opsi <strong>"Install Aplikasi"</strong> atau <strong>"Tambahkan ke Layar Utama"</strong>.</li>
+          <li>Ikon <strong>JZAGENTIC</strong> akan langsung terpasang di menu aplikasi Android Anda layaknya aplikasi .APK native!</li>
+        </ol>
+      </div>
+
+      <div class="guide-card">
+        <h3>🍎 Cara Pasang di iPhone (Apple Safari)</h3>
+        <ol>
+          <li>Buka link ini menggunakan browser bawaan <strong>Safari</strong> di iPhone.</li>
+          <li>Tekan tombol <strong>Share / Bagikan</strong> (ikon kotak dengan panah ke atas di bilah bawah).</li>
+          <li>Gulir sedikit ke bawah dan pilih <strong>"Add to Home Screen" (Tambahkan ke Layar Utama)</strong>.</li>
+          <li>Tekan <strong>Add</strong> di pojok kanan atas. JZAGENTIC akan muncul di Home Screen iPhone Anda tanpa bilah browser!</li>
+        </ol>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentActiveFile = 'playground.js';
+    let sseSource = null;
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active'));
+
+      const tabBtn = document.getElementById(`tab-btn-${tabName}`);
+      const pane = document.getElementById(`pane-${tabName}`);
+      if (tabBtn) tabBtn.classList.add('active');
+      if (pane) pane.classList.add('active');
+
+      if (tabName === 'preview') {
+        refreshPreview();
+      }
+    }
+
+    function refreshPreview() {
+      const frame = document.getElementById('mobile-preview-frame');
+      const target = currentActiveFile.endsWith('.html') ? currentActiveFile : 'testing.html';
+      document.getElementById('preview-filename').textContent = target;
+      frame.src = `/preview/${encodeURIComponent(target)}?t=${Date.now()}`;
+    }
+
+    // Connect Server-Sent Events with resilient reconnection
+    function connectSSE() {
+      if (sseSource) {
+        sseSource.close();
+      }
+
+      sseSource = new EventSource('/api/mobile/events');
+
+      sseSource.onopen = () => {
+        const pill = document.getElementById('live-status-pill');
+        const text = document.getElementById('live-status-text');
+        pill.classList.remove('disconnected');
+        text.textContent = '● Live Sync';
+      };
+
+      sseSource.onerror = () => {
+        const pill = document.getElementById('live-status-pill');
+        const text = document.getElementById('live-status-text');
+        pill.classList.add('disconnected');
+        text.textContent = '○ Reconnecting...';
+        // Auto-reconnect after 3s
+        setTimeout(connectSSE, 3000);
+      };
+
+      sseSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'init') {
+            if (data.desktopState?.activeFile) {
+              currentActiveFile = data.desktopState.activeFile;
+              loadFile(currentActiveFile);
+            }
+          }
+
+          if (data.type === 'file_updated') {
+            if (data.path === currentActiveFile) {
+              document.getElementById('mobile-code-viewer').textContent = data.content;
+            }
+          }
+
+          if (data.type === 'new_chat') {
+            appendChatMessage(data.chatItem.user, 'user');
+            appendChatMessage(data.chatItem.agent, 'agent');
+          }
+        } catch (e) {
+          // Heartbeats or unparsed events
+        }
+      };
+    }
+
+    async function loadFileList() {
+      try {
+        const res = await fetch('/api/files');
+        const data = await res.json();
+        const dropdown = document.getElementById('file-dropdown');
+        dropdown.innerHTML = '';
+        
+        function extractFiles(items) {
+          let list = [];
+          for (const item of items) {
+            if (item.type === 'file') list.push(item.path);
+            if (item.children) list.push(...extractFiles(item.children));
+          }
+          return list;
+        }
+
+        const files = extractFiles(data.tree || []);
+        files.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f;
+          opt.textContent = f;
+          if (f === currentActiveFile) opt.selected = true;
+          dropdown.appendChild(opt);
+        });
+      } catch (e) {}
+    }
+
+    async function loadFile(filePath) {
+      currentActiveFile = filePath;
+      const dropdown = document.getElementById('file-dropdown');
+      if (dropdown) dropdown.value = filePath;
+
+      try {
+        const res = await fetch(`/api/file?path=${encodeURIComponent(filePath)}`);
+        const data = await res.json();
+        if (data.content !== undefined) {
+          document.getElementById('mobile-code-viewer').textContent = data.content;
+        }
+      } catch (e) {
+        document.getElementById('mobile-code-viewer').textContent = `// Gagal memuat ${filePath}`;
+      }
+    }
+
+    function onFileDropdownChange(val) {
+      loadFile(val);
+    }
+
+    function copyCurrentCode() {
+      const code = document.getElementById('mobile-code-viewer').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        alert('Kode berhasil disalin ke clipboard!');
+      });
+    }
+
+    async function sendChatPrompt() {
+      const input = document.getElementById('mobile-chat-input');
+      const val = input.value.trim();
+      if (!val) return;
+      input.value = '';
+
+      appendChatMessage(val, 'user');
+      const typingEl = document.getElementById('typing-indicator');
+      typingEl.style.display = 'flex';
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: val })
+        });
+        const data = await res.json();
+        typingEl.style.display = 'none';
+        if (data.reply) {
+          appendChatMessage(data.reply, 'agent');
+        } else {
+          appendChatMessage('Tidak ada balasan dari server.', 'agent');
+        }
+      } catch (err) {
+        typingEl.style.display = 'none';
+        appendChatMessage(`[Error]: ${err.message}`, 'agent');
+      }
+    }
+
+    function appendChatMessage(text, role) {
+      const container = document.getElementById('chat-list');
+      const bubble = document.createElement('div');
+      bubble.className = `chat-bubble ${role}`;
+      
+      const meta = document.createElement('div');
+      meta.className = 'chat-meta';
+      meta.textContent = role === 'user' ? '👤 Anda' : '✦ JZAGENTIC Agent';
+      bubble.appendChild(meta);
+
+      const body = document.createElement('div');
+      body.textContent = text;
+      bubble.appendChild(body);
+
+      container.appendChild(bubble);
+      bubble.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Startup
+    connectSSE();
+    loadFileList();
+    loadFile(currentActiveFile);
+  </script>
+</body>
+</html>

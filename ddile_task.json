@@ -1,0 +1,12 @@
+{
+  "task_name": "xagentic_autonomous_execution",
+  "version": "5.1.0-unrestricted",
+  "pipeline": [
+    "ast_code_scan",
+    "mcp_hub_handshake",
+    "mobile_mirror_stream",
+    "deep_execution"
+  ],
+  "unlimited_tokens": true,
+  "uncensored_mode": true
+}

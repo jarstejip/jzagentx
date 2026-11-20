@@ -1,0 +1,64 @@
+// jz.html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio | Nama Anda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <!-- Navigation -->
+    <nav class="p-6 flex justify-between items-center max-w-6xl mx-auto">
+        <div class="text-xl font-bold tracking-tighter">PORTFOLIO.</div>
+        <div class="space-x-8 text-sm font-medium">
+            <a href="#work" class="hover:text-blue-600 transition">Work</a>
+            <a href="#about" class="hover:text-blue-600 transition">About</a>
+            <a href="mailto:email@anda.com" class="bg-black text-white px-5 py-2 rounded-full">Contact</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="max-w-6xl mx-auto px-6 py-20 md:py-32">
+        <h1 class="text-5xl md:text-7xl font-bold leading-tight" data-aos="fade-up">
+            Membangun solusi digital <br> <span class="text-blue-600">dengan presisi.</span>
+        </h1>
+        <p class="mt-6 text-xl text-slate-500 max-w-2xl" data-aos="fade-up" data-aos-delay="100">
+            Saya adalah pengembang full-stack yang berfokus pada antarmuka minimalis dan performa sistem yang optimal.
+        </p>
+    </header>
+
+    <!-- Projects Grid -->
+    <section id="work" class="max-w-6xl mx-auto px-6 py-20">
+        <h2 class="text-sm uppercase tracking-widest text-slate-400 mb-10">Selected Works</h2>
+        <div class="grid md:grid-cols-2 gap-10">
+            <!-- Project 1 -->
+            <div class="group cursor-pointer" data-aos="fade-up">
+                <div class="bg-slate-200 h-80 rounded-2xl overflow-hidden mb-4">
+                    <img src="https://via.placeholder.com/800" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                </div>
+                <h3 class="text-2xl font-bold">Project Alpha</h3>
+                <p class="text-slate-500">Web Application / UI Design</p>
+            </div>
+            <!-- Project 2 -->
+            <div class="group cursor-pointer" data-aos="fade-up" data-aos-delay="100">
+                <div class="bg-slate-200 h-80 rounded-2xl overflow-hidden mb-4">
+                    <img src="https://via.placeholder.com/800" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                </div>
+                <h3 class="text-2xl font-bold">Project Beta</h3>
+                <p class="text-slate-500">System Architecture / API</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>AOS.init({ duration: 1000, once: true });</script>
+</body>
+</html>

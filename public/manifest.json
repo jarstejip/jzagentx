@@ -1,0 +1,19 @@
+{
+  "name": "JZAGENTIC Mobile Mirror",
+  "short_name": "JZAGENTIC",
+  "description": "JZAGENTIC AI Agent & IDE Mobile Companion",
+  "start_url": "/mobile",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#07090e",
+  "theme_color": "#07090e",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
