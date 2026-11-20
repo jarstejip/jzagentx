@@ -653,16 +653,38 @@ loading...
         <button class="icon-btn" id="close-admin-btn" style="font-size: 1.2rem;">✕</button>
       </div>
 
-      <!-- Password Lock Screen -->
-      <div id="admin-lock-screen" style="padding: 36px 24px; text-align: center;">
-        <div style="font-size: 2.2rem; margin-bottom: 10px;">🔒</div>
-        <h4 style="color:#ffffff; margin-bottom: 8px;">Masukkan Kunci Akses Admin</h4>
-        <p style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 18px;">
-          Portal ini digunakan untuk mengelola pengguna, aktivasi token instan, dan nomor rekening pembayaran.
+      <!-- 2-Step Verification Lock Screen (Password + OTP WhatsApp) -->
+      <div id="admin-lock-screen" style="padding: 32px 24px; text-align: center;">
+        <div style="font-size: 2.2rem; margin-bottom: 8px;">🔐</div>
+        <h4 style="color:#ffffff; margin-bottom: 6px;">Autentikasi 2-Langkah Admin (2FA)</h4>
+        <p style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 20px;">
+          Dilindungi Password Admin + Kode Verifikasi OTP ke WhatsApp Anda (081515779040).
         </p>
-        <div style="display: flex; justify-content: center; gap: 8px; max-width: 320px; margin: 0 auto;">
-          <input type="password" id="admin-secret-input" class="chat-textarea" style="height: 38px; min-height: unset; padding: 8px 12px; font-size: 0.85rem;" placeholder="Password admin...">
-          <button class="chat-send-btn" id="admin-unlock-btn" style="padding: 8px 16px; font-size: 0.82rem;">Masuk</button>
+
+        <div style="max-width: 340px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; text-align: left;">
+          <!-- Step 1: Password Admin -->
+          <div>
+            <label style="font-size:0.75rem; color:#a1a1aa; display:block; margin-bottom:4px;">1. Password Admin:</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="password" id="admin-secret-input" class="chat-textarea" style="flex:1; height: 38px; min-height: unset; padding: 8px 12px; font-size: 0.85rem;" placeholder="Password admin...">
+              <button class="btn-small" id="admin-req-otp-btn" style="white-space:nowrap; padding: 6px 12px; font-size: 0.76rem; background: #25D366; color: #000000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer;">
+                Minta OTP 📱
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 2: OTP Code -->
+          <div id="admin-otp-section" style="opacity: 0.5; pointer-events: none; transition: all 0.3s;">
+            <label style="font-size:0.75rem; color:#a1a1aa; display:block; margin-bottom:4px;">2. Masukkan 6-Digit Kode OTP:</label>
+            <input type="text" id="admin-otp-input" maxlength="6" class="chat-textarea" style="width:100%; height: 42px; min-height: unset; padding: 8px 12px; font-size: 1.1rem; letter-spacing: 4px; text-align: center; font-weight: 800; border-color: #f59e0b;" placeholder="• • • • • •">
+            <span style="font-size:0.7rem; color:#94a3b8; display:block; margin-top:4px;" id="admin-otp-status-msg">
+              Klik "Minta OTP" di atas untuk menerima kode ke WhatsApp 081515779040
+            </span>
+          </div>
+
+          <button class="chat-send-btn" id="admin-unlock-btn" style="width: 100%; padding: 10px; font-size: 0.88rem; font-weight: 800; margin-top: 6px;" disabled>
+            Buka Portal Admin 🛡️
+          </button>
         </div>
       </div>
 

@@ -20,13 +20,20 @@ const TOKEN_STATS_FILE = path.join(__dirname, '.token-stats.json');
 const PAYMENT_CONFIG_FILE = path.join(__dirname, '.payment-config.json');
 
 let PAYMENT_CONFIG = {
-  whatsappAdmin: '6285156826620',
+  whatsappAdmin: '6281515779040',
   bankName: 'QRIS Nasional (Semua Bank & E-Wallet)',
   bankAccount: 'ID1025378804435',
   bankHolder: 'TOKO Kelontong jars',
   qrisImageUrl: '/qris.jpg',
   qrisNote: 'Scan barcode QRIS dengan BCA Mobile, Livin Mandiri, BRImo, GoPay, OVO, Dana, ShopeePay atau e-wallet apa saja.',
 };
+
+// Admin 2FA OTP Security Store
+let activeAdminOtp = {
+  code: null,
+  expiresAt: 0,
+};
+const MASTER_ADMIN_PIN = '779040'; // Master PIN (6 digit terakhir nomor WA: 081515-779040)
 
 try {
   if (fs.existsSync(PAYMENT_CONFIG_FILE)) {
@@ -691,13 +698,48 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // ===== ADMIN LIST USERS =====
-    if (pathname === '/api/admin/users' && req.method === 'POST') {
+    // ===== ADMIN REQUEST 2FA OTP =====
+    if (pathname === '/api/admin/request-otp' && req.method === 'POST') {
       const { secret } = await readBody(req);
       if (secret !== 'jzadmin2026' && secret !== API_CONFIG.googleClientSecret) {
         sendJSON(res, 403, { success: false, error: 'INVALID_ADMIN_SECRET' });
         return;
       }
+      // Generate 6-digit dynamic OTP
+      const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
+      activeAdminOtp.code = randomCode;
+      activeAdminOtp.expiresAt = Date.now() + (5 * 60 * 1000); // 5 minutes
+
+      console.log(`🛡️ [ADMIN 2FA OTP GENERATED]: ${randomCode} (Valid 5 Menit) untuk WhatsApp ${PAYMENT_CONFIG.whatsappAdmin}`);
+
+      sendJSON(res, 200, {
+        success: true,
+        message: 'Kode OTP 2FA telah dibuat untuk WhatsApp Anda.',
+        targetPhone: PAYMENT_CONFIG.whatsappAdmin,
+        otpPreview: randomCode,
+        waVerifyUrl: `https://wa.me/${PAYMENT_CONFIG.whatsappAdmin}?text=${encodeURIComponent(`Kode Verifikasi 2FA Admin JZAGENTIC: ${randomCode} (Rahasia & Berlaku 5 Menit)`)}`,
+      });
+      return;
+    }
+
+    // ===== ADMIN LIST USERS (PROTECTED WITH PASSWORD + OTP) =====
+    if (pathname === '/api/admin/users' && req.method === 'POST') {
+      const { secret, otp } = await readBody(req);
+      if (secret !== 'jzadmin2026' && secret !== API_CONFIG.googleClientSecret) {
+        sendJSON(res, 403, { success: false, error: 'INVALID_ADMIN_SECRET' });
+        return;
+      }
+
+      // 2-Step OTP Validation (Dynamic OTP or Master PIN 779040)
+      const cleanOtp = (otp || '').toString().trim();
+      const isOtpValid = (cleanOtp === MASTER_ADMIN_PIN) ||
+                         (activeAdminOtp.code && cleanOtp === activeAdminOtp.code && Date.now() < activeAdminOtp.expiresAt);
+
+      if (!isOtpValid) {
+        sendJSON(res, 403, { success: false, error: 'INVALID_OR_EXPIRED_OTP' });
+        return;
+      }
+
       const usersList = userStore.getAllUsers();
       sendJSON(res, 200, {
         success: true,

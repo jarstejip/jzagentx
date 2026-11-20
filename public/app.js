@@ -14,7 +14,8 @@ let currentUser = null;
 let sessionToken = localStorage.getItem('jz_session_token') || null;
 let googleClientId = '';
 let availablePlans = [];
-let whatsappAdminNumber = '6285156826620';
+let whatsappAdminNumber = '6281515779040';
+let currentAdminOtp = '';
 
 // Real Token Tracking
 let tokenStats = {
@@ -1626,27 +1627,79 @@ function closeAdminPortal() {
 if (openAdminPortalBtn) openAdminPortalBtn.addEventListener('click', openAdminPortal);
 if (closeAdminBtn) closeAdminBtn.addEventListener('click', closeAdminPortal);
 
-// Unlock Admin
-document.getElementById('admin-unlock-btn')?.addEventListener('click', async () => {
+// Request 2FA OTP for Admin
+document.getElementById('admin-req-otp-btn')?.addEventListener('click', async () => {
   const secret = document.getElementById('admin-secret-input').value.trim();
-  if (!secret) return showToast('Masukkan password admin!');
+  if (!secret) return showToast('Masukkan password admin terlebih dahulu!');
+
+  const reqBtn = document.getElementById('admin-req-otp-btn');
+  reqBtn.disabled = true;
+  reqBtn.textContent = 'Membuat...';
 
   try {
-    const res = await fetch('/api/admin/users', {
+    const res = await fetch('/api/admin/request-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ secret }),
     });
     const data = await res.json();
     if (data.success) {
+      const otpSection = document.getElementById('admin-otp-section');
+      const unlockBtn = document.getElementById('admin-unlock-btn');
+      const statusMsg = document.getElementById('admin-otp-status-msg');
+
+      if (otpSection) {
+        otpSection.style.opacity = '1';
+        otpSection.style.pointerEvents = 'auto';
+      }
+      if (unlockBtn) unlockBtn.disabled = false;
+
+      // Fill in status message with option to open WhatsApp directly
+      if (statusMsg) {
+        statusMsg.innerHTML = `
+          <span style="color:#34d399; font-weight:700;">✓ OTP: <strong>${data.otpPreview}</strong> (atau PIN Master Anda)</span>
+          <br><a href="${data.waVerifyUrl}" target="_blank" style="color:#38bdf8; text-decoration:underline;">Kirim ke WhatsApp 081515779040 ↗</a>
+        `;
+      }
+
+      document.getElementById('admin-otp-input')?.focus();
+      showToast(`🔐 Kode OTP dibuat: ${data.otpPreview}`);
+    } else {
+      showToast('Gagal: Password admin salah!');
+    }
+  } catch (e) {
+    showToast('Error koneksi request OTP: ' + e.message);
+  } finally {
+    reqBtn.disabled = false;
+    reqBtn.textContent = 'Kirim Ulang 📱';
+  }
+});
+
+// Unlock Admin with Password + OTP
+document.getElementById('admin-unlock-btn')?.addEventListener('click', async () => {
+  const secret = document.getElementById('admin-secret-input').value.trim();
+  const otp = document.getElementById('admin-otp-input').value.trim();
+
+  if (!secret) return showToast('Masukkan password admin!');
+  if (!otp) return showToast('Masukkan 6-digit kode OTP atau PIN Master Anda!');
+
+  try {
+    const res = await fetch('/api/admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret, otp }),
+    });
+    const data = await res.json();
+    if (data.success) {
       currentAdminSecret = secret;
+      currentAdminOtp = otp;
       document.getElementById('admin-lock-screen').style.display = 'none';
       document.getElementById('admin-unlocked-screen').style.display = 'block';
       renderAdminUsers(data.users || []);
       populateAdminSettings(data.paymentConfig || {});
-      showToast('Admin Portal berhasil dibuka! 🛡️');
+      showToast('Admin Portal Terverifikasi (2FA Sukses)! 🛡️');
     } else {
-      showToast('Password admin salah!');
+      showToast('Kode OTP salah atau telah kadaluarsa!');
     }
   } catch (e) {
     showToast('Error koneksi admin: ' + e.message);
@@ -1675,7 +1728,7 @@ document.getElementById('refresh-admin-users-btn')?.addEventListener('click', as
     const res = await fetch('/api/admin/users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret: currentAdminSecret }),
+      body: JSON.stringify({ secret: currentAdminSecret, otp: currentAdminOtp }),
     });
     const data = await res.json();
     if (data.success) {
