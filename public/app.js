@@ -1049,7 +1049,11 @@ async function loadApiKeyStatus() {
   }
 }
 
-document.getElementById('open-api-keys-btn').addEventListener('click', openApiModal);
+document.getElementById('open-api-keys-btn')?.addEventListener('click', openApiModal);
+document.getElementById('admin-open-api-keys-btn')?.addEventListener('click', () => {
+  closeAdminPortal();
+  openApiModal();
+});
 document.getElementById('close-api-btn').addEventListener('click', closeApiModal);
 document.getElementById('api-modal-overlay').addEventListener('click', (e) => {
   if (e.target.id === 'api-modal-overlay') closeApiModal();

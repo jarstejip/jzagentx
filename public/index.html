@@ -63,7 +63,6 @@
         </div>
 
         <button class="icon-btn" id="open-admin-portal-btn" title="Admin Portal (Topup & Settings)">🛡️</button>
-        <button class="icon-btn" id="open-api-keys-btn" title="Konfigurasi API Keys">🔑</button>
         <button class="icon-btn" id="toggle-fullscreen" title="Layar Penuh">⛶</button>
       </div>
     </header>
@@ -691,9 +690,14 @@ loading...
       <!-- Unlocked Admin Content -->
       <div id="admin-unlocked-screen" style="display: none; padding: 20px; overflow-y: auto; max-height: 75vh;">
         <!-- Admin Subtabs -->
-        <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
-          <button class="btn-small active-subtab" id="admin-tab-users-btn">👥 Kelola Pengguna & Topup</button>
-          <button class="btn-small" id="admin-tab-settings-btn">⚙️ Pengaturan QRIS & Rekening</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-small active-subtab" id="admin-tab-users-btn">👥 Kelola Pengguna & Topup</button>
+            <button class="btn-small" id="admin-tab-settings-btn">⚙️ Pengaturan QRIS & Rekening</button>
+          </div>
+          <button class="btn-small" id="admin-open-api-keys-btn" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); color: #fbbf24; font-weight: 600; cursor: pointer;">
+            🔑 Konfigurasi API Keys
+          </button>
         </div>
 
         <!-- Section 1: User Management -->
