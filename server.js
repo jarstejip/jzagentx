@@ -17,6 +17,28 @@ const WORKSPACE_DIR = path.join(__dirname, 'workspace');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const KEYS_FILE = path.join(__dirname, '.api-keys.json');
 const TOKEN_STATS_FILE = path.join(__dirname, '.token-stats.json');
+const PAYMENT_CONFIG_FILE = path.join(__dirname, '.payment-config.json');
+
+let PAYMENT_CONFIG = {
+  whatsappAdmin: '6285156826620',
+  bankName: 'BCA / Dana / QRIS',
+  bankAccount: 'Hubungi Admin via WhatsApp',
+  bankHolder: 'JZAGENTIC Official',
+  qrisImageUrl: '',
+  qrisNote: 'Scan barcode QRIS dengan BCA Mobile, GoPay, OVO, Dana, ShopeePay, atau m-Banking Anda.',
+};
+
+try {
+  if (fs.existsSync(PAYMENT_CONFIG_FILE)) {
+    PAYMENT_CONFIG = { ...PAYMENT_CONFIG, ...JSON.parse(fs.readFileSync(PAYMENT_CONFIG_FILE, 'utf8')) };
+  }
+} catch (e) {}
+
+function savePaymentConfig() {
+  try {
+    fs.writeFileSync(PAYMENT_CONFIG_FILE, JSON.stringify(PAYMENT_CONFIG, null, 2), 'utf8');
+  } catch (e) {}
+}
 
 // Ensure isolated workspace exists
 if (!fs.existsSync(WORKSPACE_DIR)) {
@@ -627,7 +649,8 @@ const server = http.createServer(async (req, res) => {
             ],
           },
         ],
-        whatsappAdmin: '6285156826620',
+        whatsappAdmin: PAYMENT_CONFIG.whatsappAdmin,
+        paymentConfig: PAYMENT_CONFIG,
       });
       return;
     }
@@ -641,6 +664,47 @@ const server = http.createServer(async (req, res) => {
       }
       const result = userStore.topupUser(email, tokens, tier);
       sendJSON(res, result.success ? 200 : 400, result);
+      return;
+    }
+
+    // ===== PAYMENT SETTINGS (GET) =====
+    if (pathname === '/api/payment/settings' && req.method === 'GET') {
+      sendJSON(res, 200, PAYMENT_CONFIG);
+      return;
+    }
+
+    // ===== PAYMENT SETTINGS (UPDATE BY ADMIN) =====
+    if (pathname === '/api/payment/settings' && req.method === 'POST') {
+      const data = await readBody(req);
+      if (data.secret !== 'jzadmin2026' && data.secret !== API_CONFIG.googleClientSecret) {
+        sendJSON(res, 403, { success: false, error: 'INVALID_ADMIN_SECRET' });
+        return;
+      }
+      if (data.whatsappAdmin) PAYMENT_CONFIG.whatsappAdmin = data.whatsappAdmin.replace(/[^0-9]/g, '');
+      if (data.bankName) PAYMENT_CONFIG.bankName = data.bankName;
+      if (data.bankAccount) PAYMENT_CONFIG.bankAccount = data.bankAccount;
+      if (data.bankHolder) PAYMENT_CONFIG.bankHolder = data.bankHolder;
+      if (data.qrisImageUrl !== undefined) PAYMENT_CONFIG.qrisImageUrl = data.qrisImageUrl;
+      if (data.qrisNote) PAYMENT_CONFIG.qrisNote = data.qrisNote;
+      savePaymentConfig();
+      sendJSON(res, 200, { success: true, settings: PAYMENT_CONFIG });
+      return;
+    }
+
+    // ===== ADMIN LIST USERS =====
+    if (pathname === '/api/admin/users' && req.method === 'POST') {
+      const { secret } = await readBody(req);
+      if (secret !== 'jzadmin2026' && secret !== API_CONFIG.googleClientSecret) {
+        sendJSON(res, 403, { success: false, error: 'INVALID_ADMIN_SECRET' });
+        return;
+      }
+      const usersList = userStore.getAllUsers();
+      sendJSON(res, 200, {
+        success: true,
+        count: usersList.length,
+        users: usersList,
+        paymentConfig: PAYMENT_CONFIG,
+      });
       return;
     }
 

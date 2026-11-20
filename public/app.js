@@ -1476,20 +1476,362 @@ async function renderPricingPlans() {
   }
 }
 
-function checkoutPlan(plan) {
+// ==================== QRIS CHECKOUT & ADMIN PORTAL ====================
+const qrisModalOverlay = document.getElementById('qris-modal-overlay');
+const closeQrisBtn = document.getElementById('close-qris-btn');
+const adminModalOverlay = document.getElementById('admin-modal-overlay');
+const closeAdminBtn = document.getElementById('close-admin-btn');
+const openAdminPortalBtn = document.getElementById('open-admin-portal-btn');
+let currentAdminSecret = '';
+
+function closeQrisModal() {
+  if (qrisModalOverlay) qrisModalOverlay.classList.remove('active');
+}
+if (closeQrisBtn) closeQrisBtn.addEventListener('click', closeQrisModal);
+
+async function checkoutPlan(plan) {
   if (plan.priceRp === 0) {
     if (!currentUser) showAuthModal();
     else closePricingModal();
     return;
   }
-
-  const userEmail = currentUser ? currentUser.email : 'Belum Login';
-  const userName = currentUser ? currentUser.name : 'Developer';
-  const text = `Halo Admin JZAGENTIC, saya ingin membeli paket token:\n\n- Akun Email: ${userEmail}\n- Nama: ${userName}\n- Paket: ${plan.name} (${plan.tokens})\n- Nominal: ${plan.priceLabel}\n\nMohon kirimkan Barcode QRIS / Rekening Transfer untuk aktivasi instan ⚡`;
-  
-  window.open(`https://wa.me/${whatsappAdminNumber}?text=${encodeURIComponent(text)}`, '_blank');
-  showToast(`Membuka WhatsApp Admin untuk checkout ${plan.name}!`);
+  closePricingModal();
+  openQrisModal(plan);
 }
+
+async function openQrisModal(plan) {
+  if (!qrisModalOverlay) return;
+
+  const orderId = 'JZ' + Math.floor(10000 + Math.random() * 90000);
+  const userEmail = currentUser ? currentUser.email : 'Tamu (Belum Login)';
+
+  document.getElementById('qris-package-name').textContent = `${plan.name} (${plan.tokens})`;
+  document.getElementById('qris-total-price').textContent = plan.priceLabel;
+
+  // Fetch latest payment settings
+  let paySettings = {
+    whatsappAdmin: whatsappAdminNumber,
+    bankName: 'BCA / Dana',
+    bankAccount: 'Hubungi Admin via WA',
+    bankHolder: 'JZAGENTIC Official',
+    qrisImageUrl: '',
+    qrisNote: 'Scan barcode QRIS dengan BCA, GoPay, OVO, Dana, ShopeePay, atau m-Banking Anda.',
+  };
+
+  try {
+    const res = await fetch('/api/payment/settings');
+    const data = await res.json();
+    paySettings = { ...paySettings, ...data };
+  } catch (e) {}
+
+  // Update bank info
+  const bankInfoEl = document.getElementById('qris-bank-info');
+  const holderInfoEl = document.getElementById('qris-holder-info');
+  if (bankInfoEl) bankInfoEl.textContent = `${paySettings.bankName}: ${paySettings.bankAccount}`;
+  if (holderInfoEl) holderInfoEl.textContent = `a.n ${paySettings.bankHolder}`;
+
+  // Copy button
+  const copyBtn = document.getElementById('copy-bank-btn');
+  if (copyBtn) {
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(paySettings.bankAccount);
+      showToast('Nomor rekening/HP berhasil disalin!');
+    };
+  }
+
+  // Render QRIS (Image if set, else SVG QRIS placeholder)
+  const qrisSlot = document.getElementById('qris-image-slot');
+  if (qrisSlot) {
+    if (paySettings.qrisImageUrl && paySettings.qrisImageUrl.startsWith('http')) {
+      qrisSlot.innerHTML = `<img src="${paySettings.qrisImageUrl}" alt="QRIS" style="width:100%; height:100%; object-fit:contain;">`;
+    } else {
+      // Dynamic SVG QRIS Code with JZ Logo in center
+      qrisSlot.innerHTML = `
+        <svg viewBox="0 0 100 100" width="160" height="160" style="background:#ffffff; border-radius:4px;">
+          <!-- Corner Markers -->
+          <rect x="5" y="5" width="26" height="26" fill="#000000" rx="3"/>
+          <rect x="9" y="9" width="18" height="18" fill="#ffffff" rx="2"/>
+          <rect x="13" y="13" width="10" height="10" fill="#000000" rx="1"/>
+
+          <rect x="69" y="5" width="26" height="26" fill="#000000" rx="3"/>
+          <rect x="73" y="9" width="18" height="18" fill="#ffffff" rx="2"/>
+          <rect x="77" y="13" width="10" height="10" fill="#000000" rx="1"/>
+
+          <rect x="5" y="69" width="26" height="26" fill="#000000" rx="3"/>
+          <rect x="9" y="73" width="18" height="18" fill="#ffffff" rx="2"/>
+          <rect x="13" y="77" width="10" height="10" fill="#000000" rx="1"/>
+
+          <!-- Grid Dots Matrix -->
+          <rect x="36" y="8" width="6" height="6" fill="#000000"/>
+          <rect x="46" y="8" width="6" height="6" fill="#000000"/>
+          <rect x="56" y="8" width="6" height="6" fill="#000000"/>
+          <rect x="36" y="18" width="6" height="6" fill="#000000"/>
+          <rect x="56" y="18" width="6" height="6" fill="#000000"/>
+          <rect x="8" y="36" width="6" height="6" fill="#000000"/>
+          <rect x="18" y="36" width="6" height="6" fill="#000000"/>
+          <rect x="28" y="36" width="6" height="6" fill="#000000"/>
+          <rect x="8" y="46" width="6" height="6" fill="#000000"/>
+          <rect x="18" y="56" width="6" height="6" fill="#000000"/>
+          <rect x="36" y="36" width="6" height="6" fill="#000000"/>
+          <rect x="56" y="36" width="6" height="6" fill="#000000"/>
+          <rect x="68" y="36" width="6" height="6" fill="#000000"/>
+          <rect x="78" y="36" width="6" height="6" fill="#000000"/>
+          <rect x="88" y="46" width="6" height="6" fill="#000000"/>
+          <rect x="68" y="56" width="6" height="6" fill="#000000"/>
+          <rect x="78" y="56" width="6" height="6" fill="#000000"/>
+          <rect x="36" y="68" width="6" height="6" fill="#000000"/>
+          <rect x="46" y="78" width="6" height="6" fill="#000000"/>
+          <rect x="56" y="88" width="6" height="6" fill="#000000"/>
+          <rect x="68" y="68" width="6" height="6" fill="#000000"/>
+          <rect x="78" y="78" width="6" height="6" fill="#000000"/>
+          <rect x="88" y="88" width="6" height="6" fill="#000000"/>
+          <rect x="36" y="88" width="6" height="6" fill="#000000"/>
+
+          <!-- Center JZ Badge -->
+          <circle cx="50" cy="50" r="14" fill="#000000"/>
+          <text x="50" y="54" font-size="9" font-weight="900" fill="#ffffff" text-anchor="middle" font-family="sans-serif">JZ</text>
+        </svg>
+      `;
+    }
+  }
+
+  // WhatsApp Confirm Button
+  const waBtn = document.getElementById('qris-confirm-wa-btn');
+  if (waBtn) {
+    waBtn.onclick = () => {
+      const waNumber = paySettings.whatsappAdmin || whatsappAdminNumber;
+      const text = `Halo Admin JZAGENTIC, saya sudah melakukan pembayaran:\n\n- No Order: ${orderId}\n- Akun Email: ${userEmail}\n- Paket: ${plan.name} (${plan.tokens})\n- Nominal: ${plan.priceLabel}\n\nMohon dicek bukti transfer berikut dan aktifkan akun saya, terima kasih! ⚡`;
+      window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, '_blank');
+      showToast('Membuka WhatsApp Admin untuk konfirmasi pembayaran!');
+    };
+  }
+
+  qrisModalOverlay.classList.add('active');
+}
+
+// Admin Portal Logic
+function openAdminPortal() {
+  if (adminModalOverlay) {
+    adminModalOverlay.classList.add('active');
+    // If not unlocked yet, focus password input
+    const passInput = document.getElementById('admin-secret-input');
+    if (passInput) passInput.focus();
+  }
+}
+
+function closeAdminPortal() {
+  if (adminModalOverlay) adminModalOverlay.classList.remove('active');
+}
+
+if (openAdminPortalBtn) openAdminPortalBtn.addEventListener('click', openAdminPortal);
+if (closeAdminBtn) closeAdminBtn.addEventListener('click', closeAdminPortal);
+
+// Unlock Admin
+document.getElementById('admin-unlock-btn')?.addEventListener('click', async () => {
+  const secret = document.getElementById('admin-secret-input').value.trim();
+  if (!secret) return showToast('Masukkan password admin!');
+
+  try {
+    const res = await fetch('/api/admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      currentAdminSecret = secret;
+      document.getElementById('admin-lock-screen').style.display = 'none';
+      document.getElementById('admin-unlocked-screen').style.display = 'block';
+      renderAdminUsers(data.users || []);
+      populateAdminSettings(data.paymentConfig || {});
+      showToast('Admin Portal berhasil dibuka! 🛡️');
+    } else {
+      showToast('Password admin salah!');
+    }
+  } catch (e) {
+    showToast('Error koneksi admin: ' + e.message);
+  }
+});
+
+// Admin Subtabs
+document.getElementById('admin-tab-users-btn')?.addEventListener('click', () => {
+  document.getElementById('admin-users-view').style.display = 'block';
+  document.getElementById('admin-settings-view').style.display = 'none';
+  document.getElementById('admin-tab-users-btn').classList.add('active-subtab');
+  document.getElementById('admin-tab-settings-btn').classList.remove('active-subtab');
+});
+
+document.getElementById('admin-tab-settings-btn')?.addEventListener('click', () => {
+  document.getElementById('admin-users-view').style.display = 'none';
+  document.getElementById('admin-settings-view').style.display = 'block';
+  document.getElementById('admin-tab-settings-btn').classList.add('active-subtab');
+  document.getElementById('admin-tab-users-btn').classList.remove('active-subtab');
+});
+
+// Refresh Admin Users
+document.getElementById('refresh-admin-users-btn')?.addEventListener('click', async () => {
+  if (!currentAdminSecret) return;
+  try {
+    const res = await fetch('/api/admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: currentAdminSecret }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      renderAdminUsers(data.users || []);
+      showToast('Data pengguna diperbarui!');
+    }
+  } catch (e) {}
+});
+
+function renderAdminUsers(users) {
+  const tbody = document.getElementById('admin-users-table-body');
+  const countEl = document.getElementById('admin-users-count');
+  if (countEl) countEl.textContent = users.length;
+  if (!tbody) return;
+
+  if (users.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:16px; text-align:center; color:#a1a1aa;">Belum ada user yang login dengan Google.</td></tr>`;
+    return;
+  }
+
+  const fmt = (n) => new Intl.NumberFormat('id-ID').format(n);
+
+  tbody.innerHTML = users.map(u => {
+    const isVip = u.tier === 'vip' || u.tokenBalance === 'UNLIMITED';
+    return `
+      <tr class="admin-user-row" style="border-bottom: 1px solid var(--border-color);">
+        <td style="padding: 10px 12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <img src="${u.picture || 'https://www.gravatar.com/avatar/?d=mp'}" style="width:22px; height:22px; border-radius:50%;" onerror="this.src='https://www.gravatar.com/avatar/?d=mp'">
+            <div>
+              <strong style="color:#ffffff; display:block;">${escapeHTML(u.name || 'User')}</strong>
+              <span style="color:#94a3b8; font-size:0.7rem;">${escapeHTML(u.email)}</span>
+            </div>
+          </div>
+        </td>
+        <td style="padding: 10px 12px;">
+          <span style="padding:2px 8px; border-radius:10px; font-weight:700; font-size:0.7rem; ${isVip ? 'background:rgba(245,158,11,0.2); color:#fbbf24;' : u.tier === 'pro' ? 'background:rgba(56,189,248,0.2); color:#38bdf8;' : 'background:rgba(255,255,255,0.08); color:#a1a1aa;'}">
+            ${u.tierName || u.tier}
+          </span>
+        </td>
+        <td style="padding: 10px 12px; font-weight:700; color:${isVip ? '#fbbf24' : '#34d399'};">
+          ${isVip ? '👑 UNLIMITED' : fmt(u.tokenBalance)}
+        </td>
+        <td style="padding: 10px 12px; color:#a1a1aa;">
+          ${fmt(u.tokensUsed || 0)} tokens
+        </td>
+        <td style="padding: 10px 12px; text-align:right;">
+          <div style="display:inline-flex; gap:4px;">
+            <button class="btn-small quick-row-topup" data-email="${u.email}" data-action="pro" style="padding:2px 6px; font-size:0.7rem; background:#10b981; color:#000000; font-weight:700;" title="Tambah 1 Juta Token (Pro)">+1M</button>
+            <button class="btn-small quick-row-topup" data-email="${u.email}" data-action="vip" style="padding:2px 6px; font-size:0.7rem; background:#f59e0b; color:#000000; font-weight:700;" title="Jadikan VIP Unlimited">VIP</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('.quick-row-topup').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const email = btn.getAttribute('data-email');
+      const action = btn.getAttribute('data-action');
+      await executeAdminTopup(email, action);
+    });
+  });
+}
+
+async function executeAdminTopup(email, action) {
+  let tokens = 0;
+  let tier = 'pro';
+
+  if (action === 'starter') {
+    tokens = 250000;
+    tier = 'starter';
+  } else if (action === 'pro') {
+    tokens = 1000000;
+    tier = 'pro';
+  } else if (action === 'vip') {
+    tokens = 999999999;
+    tier = 'vip';
+  } else if (action === 'reset_free') {
+    tokens = 50000;
+    tier = 'free';
+  }
+
+  try {
+    const res = await fetch('/api/admin/topup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: currentAdminSecret,
+        email,
+        tokens,
+        tier,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Sukses mengaktifkan paket ${tier.toUpperCase()} untuk ${email}! ⚡`);
+      // If current user is the one topped up, refresh
+      if (currentUser && currentUser.email.toLowerCase() === email.toLowerCase()) {
+        updateUserState(data.user);
+      }
+      document.getElementById('refresh-admin-users-btn')?.click();
+    } else {
+      showToast('Gagal topup: ' + (data.error || 'Unknown'));
+    }
+  } catch (e) {
+    showToast('Error topup: ' + e.message);
+  }
+}
+
+// Quick 1-Click Form Submit
+document.getElementById('quick-topup-submit-btn')?.addEventListener('click', async () => {
+  const email = document.getElementById('quick-topup-email').value.trim();
+  const action = document.getElementById('quick-topup-action').value;
+  if (!email) return showToast('Masukkan email pengguna yang ingin di-topup!');
+  await executeAdminTopup(email, action);
+});
+
+function populateAdminSettings(cfg) {
+  if (cfg.whatsappAdmin) document.getElementById('setting-wa-number').value = cfg.whatsappAdmin;
+  if (cfg.bankName) document.getElementById('setting-bank-name').value = cfg.bankName;
+  if (cfg.bankAccount) document.getElementById('setting-bank-account').value = cfg.bankAccount;
+  if (cfg.bankHolder) document.getElementById('setting-bank-holder').value = cfg.bankHolder;
+  if (cfg.qrisImageUrl) document.getElementById('setting-qris-url').value = cfg.qrisImageUrl;
+  if (cfg.qrisNote) document.getElementById('setting-qris-note').value = cfg.qrisNote;
+}
+
+// Save Payment Settings Submit
+document.getElementById('save-payment-settings-btn')?.addEventListener('click', async () => {
+  const payload = {
+    secret: currentAdminSecret,
+    whatsappAdmin: document.getElementById('setting-wa-number').value.trim(),
+    bankName: document.getElementById('setting-bank-name').value.trim(),
+    bankAccount: document.getElementById('setting-bank-account').value.trim(),
+    bankHolder: document.getElementById('setting-bank-holder').value.trim(),
+    qrisImageUrl: document.getElementById('setting-qris-url').value.trim(),
+    qrisNote: document.getElementById('setting-qris-note').value.trim(),
+  };
+
+  try {
+    const res = await fetch('/api/payment/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (data.settings.whatsappAdmin) whatsappAdminNumber = data.settings.whatsappAdmin;
+      showToast('Pengaturan pembayaran & QRIS berhasil disimpan!');
+    } else {
+      showToast('Gagal menyimpan: ' + (data.error || 'Unknown'));
+    }
+  } catch (e) {
+    showToast('Error menyimpan: ' + e.message);
+  }
+});
 
 function renderGoogleButton() {
   const container = document.getElementById('google-signin-btn-container');

@@ -291,6 +291,10 @@ function verifySessionToken(token) {
   }
 }
 
+function getAllUsers() {
+  return Object.values(users).map(sanitizeUser);
+}
+
 module.exports = {
   TIERS,
   DEFAULT_INITIAL_TOKENS,
@@ -298,6 +302,7 @@ module.exports = {
   findOrCreateUser,
   getUser,
   getRawUser,
+  getAllUsers,
   deductTokens,
   topupUser,
   createSessionToken,

@@ -1659,3 +1659,13 @@ body {
   width: 100%;
 }
 
+.active-subtab {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+.admin-user-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
