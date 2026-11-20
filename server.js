@@ -714,10 +714,9 @@ const server = http.createServer(async (req, res) => {
 
       sendJSON(res, 200, {
         success: true,
-        message: 'Kode OTP 2FA telah dibuat untuk WhatsApp Anda.',
-        targetPhone: PAYMENT_CONFIG.whatsappAdmin,
-        otpPreview: randomCode,
-        waVerifyUrl: `https://wa.me/${PAYMENT_CONFIG.whatsappAdmin}?text=${encodeURIComponent(`Kode Verifikasi 2FA Admin JZAGENTIC: ${randomCode} (Rahasia & Berlaku 5 Menit)`)}`,
+        message: 'Kode OTP 2FA telah dikirimkan secara rahasia ke WhatsApp.',
+        targetPhone: '081515779040',
+        waVerifyUrl: `https://wa.me/${PAYMENT_CONFIG.whatsappAdmin}?text=${encodeURIComponent(`Kode Verifikasi 2FA Admin JZAGENTIC Anda adalah: ${randomCode} (Rahasia & Berlaku 5 Menit)`)}`,
       });
       return;
     }

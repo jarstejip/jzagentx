@@ -1654,16 +1654,19 @@ document.getElementById('admin-req-otp-btn')?.addEventListener('click', async ()
       }
       if (unlockBtn) unlockBtn.disabled = false;
 
-      // Fill in status message with option to open WhatsApp directly
+      // Status message (DO NOT display OTP code on screen for maximum privacy)
       if (statusMsg) {
         statusMsg.innerHTML = `
-          <span style="color:#34d399; font-weight:700;">✓ OTP: <strong>${data.otpPreview}</strong> (atau PIN Master Anda)</span>
-          <br><a href="${data.waVerifyUrl}" target="_blank" style="color:#38bdf8; text-decoration:underline;">Kirim ke WhatsApp 081515779040 ↗</a>
+          <span style="color:#34d399; font-weight:600;">✓ Kode OTP telah dikirim rahasia ke WhatsApp Anda.</span>
+          <br><a href="${data.waVerifyUrl}" target="_blank" style="color:#25D366; text-decoration:underline; font-weight:700;">📲 Klik di Sini untuk Buka WhatsApp & Lihat Kode OTP ↗</a>
         `;
       }
 
       document.getElementById('admin-otp-input')?.focus();
-      showToast(`🔐 Kode OTP dibuat: ${data.otpPreview}`);
+      showToast('Kode OTP telah dikirim rahasia ke WhatsApp!');
+      if (data.waVerifyUrl) {
+        window.open(data.waVerifyUrl, '_blank');
+      }
     } else {
       showToast('Gagal: Password admin salah!');
     }
