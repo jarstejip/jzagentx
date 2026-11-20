@@ -9,6 +9,13 @@ let currentFile = 'playground.js';
 let localIP = 'localhost';
 let serverPort = 3333;
 
+// User Authentication & Monetization State
+let currentUser = null;
+let sessionToken = localStorage.getItem('jz_session_token') || null;
+let googleClientId = '';
+let availablePlans = [];
+let whatsappAdminNumber = '6285156826620';
+
 // Real Token Tracking
 let tokenStats = {
   inputTokensToday: 0,
@@ -592,6 +599,13 @@ document.getElementById('ide-agent-toggle').addEventListener('click', () => {
 async function sendChatMessageStream(promptText, containerId = 'chat-feed-container') {
   if (!promptText.trim()) return;
 
+  // Check mandatory authentication
+  if (!currentUser || !sessionToken) {
+    showAuthModal();
+    showToast('Silakan masuk dengan akun Google untuk menggunakan AI Agent!');
+    return;
+  }
+
   const container = document.getElementById(containerId);
   const scrollParent = document.getElementById('gemini-scroll-area') || document.getElementById('view-agent');
   const welcomeHero = document.getElementById('gemini-welcome');
@@ -649,7 +663,10 @@ async function sendChatMessageStream(promptText, containerId = 'chat-feed-contai
     const isAgent = currentTab === 'agent';
     const response = await fetch('/api/ai/stream', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sessionToken}`
+      },
       body: JSON.stringify({
         message: promptText,
         model: activeModel.name,
@@ -679,8 +696,21 @@ async function sendChatMessageStream(promptText, containerId = 'chat-feed-contai
 
         try {
           const data = JSON.parse(payloadStr);
+          if (data.type === 'auth_required') {
+            streamBody.innerHTML = `<span style="color:#ef4444; font-weight:600;">${escapeHTML(data.message)}</span>`;
+            agentCard.querySelector('.stream-status').textContent = '🔒 Wajib Login';
+            showAuthModal();
+            return;
+          }
+          if (data.type === 'quota_exhausted') {
+            streamBody.innerHTML = `<span style="color:#f59e0b; font-weight:700;">${escapeHTML(data.message)}</span>`;
+            agentCard.querySelector('.stream-status').textContent = '⚠️ Kuota Habis';
+            if (data.user) updateUserState(data.user);
+            openPricingModal();
+            return;
+          }
           if (data.type === 'token_stats') {
-            // Initial stats with input token count
+            if (data.user) updateUserState(data.user);
             updateTokenTicker(data.stats);
           } else if (data.type === 'token') {
             accumulatedText += data.token;
@@ -696,6 +726,8 @@ async function sendChatMessageStream(promptText, containerId = 'chat-feed-contai
             streamBody.innerHTML = formatMarkdown(finalReply);
             agentCard.querySelector('.stream-status').textContent = '✓ Selesai';
             agentCard.querySelector('.stream-status').style.color = '#e4e4e7';
+
+            if (data.user) updateUserState(data.user);
 
             // Show token breakdown
             if (data.tokenBreakdown) {
@@ -766,7 +798,6 @@ function updateTokenTicker(stats) {
     if (stats.requestsAllTime !== undefined) tokenStats.requestsAllTime = stats.requestsAllTime || 0;
     if (stats.inputTokens !== undefined) tokenStats.currentInput = stats.inputTokens || 0;
     if (stats.outputTokens !== undefined) tokenStats.currentOutput = stats.outputTokens || 0;
-    // Handle flat stats from streaming (totalToday, totalAllTime)
     if (stats.totalToday !== undefined) tokenStats.totalTokensToday = stats.totalToday;
     if (stats.totalAllTime !== undefined) tokenStats.totalTokensAllTime = stats.totalAllTime;
   }
@@ -774,13 +805,25 @@ function updateTokenTicker(stats) {
   const badge = document.getElementById('token-counter-badge');
   if (badge) {
     const fmt = (n) => new Intl.NumberFormat('id-ID').format(n);
-    const todayTotal = tokenStats.totalTokensToday;
-    const allTime = tokenStats.totalTokensAllTime;
-
-    if (todayTotal === 0 && allTime === 0) {
-      badge.innerHTML = `<span>♾️ UNLIMITED • 0 Tokens Digunakan</span>`;
+    if (currentUser) {
+      if (currentUser.isVip || currentUser.tokenBalance === 'UNLIMITED') {
+        badge.innerHTML = `<span>👑 VIP UNLIMITED • Bebas Kuota</span>`;
+        badge.style.color = '#fbbf24';
+        badge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+      } else {
+        const bal = typeof currentUser.tokenBalance === 'number' ? currentUser.tokenBalance : parseInt(currentUser.tokenBalance, 10) || 0;
+        badge.innerHTML = `<span>🪙 Sisa: ${fmt(bal)} Tokens (${currentUser.tierName || 'Free'})</span>`;
+        if (bal <= 0) {
+          badge.style.color = '#ef4444';
+          badge.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+        } else {
+          badge.style.color = '#34d399';
+          badge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        }
+      }
     } else {
-      badge.innerHTML = `<span>📊 Hari Ini: ${fmt(todayTotal)} tokens • Total: ${fmt(allTime)} tokens</span>`;
+      badge.innerHTML = `<span>🔒 Masuk Google (50.000 Token Gratis)</span>`;
+      badge.style.color = '#a1a1aa';
     }
   }
 }
@@ -1277,6 +1320,260 @@ function formatMarkdown(text) {
   }).join('');
 }
 
+// ==================== 10. AUTH & MONETIZATION (GOOGLE OAUTH & PRICING) ====================
+const authModalOverlay = document.getElementById('auth-modal-overlay');
+const pricingModalOverlay = document.getElementById('pricing-modal-overlay');
+const closePricingBtn = document.getElementById('close-pricing-btn');
+const openPricingBtn = document.getElementById('open-pricing-btn');
+const tokenCounterBadge = document.getElementById('token-counter-badge');
+
+function showAuthModal() {
+  if (authModalOverlay) {
+    authModalOverlay.classList.add('active');
+    renderGoogleButton();
+  }
+}
+
+function hideAuthModal() {
+  if (authModalOverlay) authModalOverlay.classList.remove('active');
+}
+
+function openPricingModal() {
+  if (pricingModalOverlay) {
+    pricingModalOverlay.classList.add('active');
+    renderPricingPlans();
+    updatePricingUserBanner();
+  }
+}
+
+function closePricingModal() {
+  if (pricingModalOverlay) pricingModalOverlay.classList.remove('active');
+}
+
+if (openPricingBtn) openPricingBtn.addEventListener('click', openPricingModal);
+if (closePricingBtn) closePricingBtn.addEventListener('click', closePricingModal);
+if (tokenCounterBadge) tokenCounterBadge.addEventListener('click', openPricingModal);
+
+function updateUserState(user) {
+  if (!user) return;
+  currentUser = user;
+  renderUserNavbar(currentUser);
+  updateTokenTicker();
+  updatePricingUserBanner();
+}
+
+function updatePricingUserBanner() {
+  const emailEl = document.getElementById('pricing-user-email');
+  const balanceEl = document.getElementById('pricing-user-balance');
+  const tierEl = document.getElementById('pricing-user-tier');
+  const fmt = (n) => new Intl.NumberFormat('id-ID').format(n);
+
+  if (currentUser) {
+    if (emailEl) emailEl.textContent = currentUser.email;
+    if (balanceEl) {
+      balanceEl.textContent = (currentUser.isVip || currentUser.tokenBalance === 'UNLIMITED')
+        ? '👑 UNLIMITED VIP'
+        : `${fmt(currentUser.tokenBalance)} Token`;
+    }
+    if (tierEl) tierEl.textContent = currentUser.tierName || 'Free Starter';
+  } else {
+    if (emailEl) emailEl.textContent = 'Belum Masuk';
+    if (balanceEl) balanceEl.textContent = '0 Token';
+    if (tierEl) tierEl.textContent = 'Tamu';
+  }
+}
+
+function renderUserNavbar(user) {
+  const container = document.getElementById('auth-nav-container');
+  if (!container) return;
+
+  if (user) {
+    container.innerHTML = `
+      <div class="user-profile-chip" id="user-chip-btn" title="Klik untuk Info Akun / Keluar">
+        <img class="user-avatar-img" src="${user.picture || 'https://www.gravatar.com/avatar/?d=mp'}" alt="${user.name}" onerror="this.src='https://www.gravatar.com/avatar/?d=mp'">
+        <span class="user-chip-name">${escapeHTML(user.name.split(' ')[0])}</span>
+        <span style="font-size:0.65rem; color:#a1a1aa;">▼</span>
+      </div>
+    `;
+
+    document.getElementById('user-chip-btn')?.addEventListener('click', () => {
+      const wantLogout = confirm(`Akun: ${user.name} (${user.email})\nPaket: ${user.tierName}\nSisa Token: ${user.tokenBalance}\n\nApakah Anda ingin keluar (Logout)?`);
+      if (wantLogout) logout();
+    });
+  } else {
+    container.innerHTML = `
+      <button class="google-login-nav-btn" id="nav-login-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15s.7 5.3 1.9 7.7l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16c1.8 3.7 5.6 7 10.1 7z"/></svg>
+        <span>Masuk</span>
+      </button>
+    `;
+    document.getElementById('nav-login-btn')?.addEventListener('click', showAuthModal);
+  }
+}
+
+function logout() {
+  localStorage.removeItem('jz_session_token');
+  currentUser = null;
+  sessionToken = null;
+  renderUserNavbar(null);
+  updateTokenTicker();
+  showToast('Anda telah keluar dari akun JZAGENTIC.');
+  showAuthModal();
+}
+
+async function renderPricingPlans() {
+  const container = document.getElementById('pricing-cards-container');
+  if (!container) return;
+
+  try {
+    if (availablePlans.length === 0) {
+      const res = await fetch('/api/plans');
+      const data = await res.json();
+      availablePlans = data.plans || [];
+      if (data.whatsappAdmin) whatsappAdminNumber = data.whatsappAdmin;
+    }
+
+    container.innerHTML = availablePlans.map(plan => {
+      const isCurrent = currentUser && currentUser.tier === plan.id;
+      const isFeatured = plan.id === 'pro';
+      return `
+        <div class="pricing-card ${isFeatured ? 'featured' : ''} ${isCurrent ? 'active-user-tier' : ''}">
+          <span class="pricing-badge-tag" style="${isCurrent ? 'background:rgba(16,185,129,0.2); color:#34d399;' : isFeatured ? 'background:rgba(245,158,11,0.2); color:#fbbf24;' : 'background:rgba(255,255,255,0.08); color:#a1a1aa;'}">
+            ${isCurrent ? 'AKTIF' : plan.badge}
+          </span>
+          <div style="font-size:1.05rem; font-weight:800; color:#ffffff; margin-bottom:4px;">${plan.name}</div>
+          <div style="font-size:1.25rem; font-weight:800; color:${isFeatured ? '#f59e0b' : '#34d399'}; margin-bottom:4px;">${plan.priceLabel}</div>
+          <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:12px;">${plan.tokens}</div>
+          
+          <ul style="list-style:none; padding:0; margin:0 0 16px 0; font-size:0.74rem; color:#cbd5e1; display:flex; flex-direction:column; gap:6px;">
+            ${plan.features.map(f => `<li style="display:flex; align-items:center; gap:6px;"><span style="color:#34d399;">✓</span> ${f}</li>`).join('')}
+          </ul>
+
+          <button class="pricing-btn-action" style="${isCurrent ? 'background:#27272a; color:#a1a1aa; cursor:default;' : isFeatured ? 'background:#f59e0b; color:#000000;' : 'background:#ffffff; color:#000000;'}" data-plan-id="${plan.id}" ${isCurrent ? 'disabled' : ''}>
+            ${isCurrent ? 'Paket Aktif' : plan.priceRp === 0 ? 'Mulai Gratis' : 'Beli Sekarang ⚡'}
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.pricing-btn-action').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const planId = btn.getAttribute('data-plan-id');
+        const plan = availablePlans.find(p => p.id === planId);
+        if (plan) checkoutPlan(plan);
+      });
+    });
+
+    const waBtn = document.getElementById('pricing-whatsapp-btn');
+    if (waBtn) {
+      waBtn.onclick = () => {
+        const text = `Halo Admin JZAGENTIC, saya ingin upgrade akun:\n- Email: ${currentUser ? currentUser.email : 'Belum Login'}\n- Mohon kirimkan QRIS / Nomor Rekening untuk aktivasi VIP instan.`;
+        window.open(`https://wa.me/${whatsappAdminNumber}?text=${encodeURIComponent(text)}`, '_blank');
+      };
+    }
+  } catch (e) {
+    console.error('Error rendering pricing:', e);
+  }
+}
+
+function checkoutPlan(plan) {
+  if (plan.priceRp === 0) {
+    if (!currentUser) showAuthModal();
+    else closePricingModal();
+    return;
+  }
+
+  const userEmail = currentUser ? currentUser.email : 'Belum Login';
+  const userName = currentUser ? currentUser.name : 'Developer';
+  const text = `Halo Admin JZAGENTIC, saya ingin membeli paket token:\n\n- Akun Email: ${userEmail}\n- Nama: ${userName}\n- Paket: ${plan.name} (${plan.tokens})\n- Nominal: ${plan.priceLabel}\n\nMohon kirimkan Barcode QRIS / Rekening Transfer untuk aktivasi instan ⚡`;
+  
+  window.open(`https://wa.me/${whatsappAdminNumber}?text=${encodeURIComponent(text)}`, '_blank');
+  showToast(`Membuka WhatsApp Admin untuk checkout ${plan.name}!`);
+}
+
+function renderGoogleButton() {
+  const container = document.getElementById('google-signin-btn-container');
+  if (!container) return;
+
+  const tryRender = () => {
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      try {
+        google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleGoogleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+
+        container.innerHTML = '';
+        google.accounts.id.renderButton(container, {
+          theme: 'filled_black',
+          size: 'large',
+          text: 'signin_with',
+          shape: 'rectangular',
+          width: 280,
+        });
+      } catch (e) {
+        console.warn('Google One Tap init issue:', e.message);
+      }
+    } else {
+      setTimeout(tryRender, 300);
+    }
+  };
+  tryRender();
+}
+
+async function handleGoogleCredentialResponse(response) {
+  try {
+    const res = await fetch('/api/auth/google/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential }),
+    });
+    const data = await res.json();
+    if (data.success && data.user) {
+      sessionToken = data.sessionToken;
+      localStorage.setItem('jz_session_token', sessionToken);
+      updateUserState(data.user);
+      hideAuthModal();
+      showToast(`🎉 Berhasil masuk! Selamat datang ${data.user.name}, 50.000 Token Gratis telah aktif!`);
+    } else {
+      showToast('Gagal verifikasi Google: ' + (data.error || 'Unknown'));
+    }
+  } catch (e) {
+    showToast('Error koneksi Google auth: ' + e.message);
+  }
+}
+
+async function initAuthCheck() {
+  try {
+    const configRes = await fetch('/api/auth/config');
+    const configData = await configRes.json();
+    if (configData.googleClientId) {
+      googleClientId = configData.googleClientId;
+    }
+  } catch (e) {}
+
+  if (sessionToken) {
+    try {
+      const meRes = await fetch('/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${sessionToken}` },
+      });
+      const meData = await meRes.json();
+      if (meData.authenticated && meData.user) {
+        updateUserState(meData.user);
+        return;
+      }
+    } catch (e) {}
+  }
+
+  // Not logged in: render button in navbar and prompt login
+  renderUserNavbar(null);
+  updateTokenTicker();
+  // Prompt login modal
+  showAuthModal();
+}
+
 // Initialize Application
 window.addEventListener('DOMContentLoaded', async () => {
   initParticles();
@@ -1285,6 +1582,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   openFile('playground.js');
   setupMobileMirror();
   initSSE();
+  initAuthCheck();
 
   // Check if API keys are configured & load real token stats
   try {
@@ -1299,12 +1597,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     const badge = document.getElementById('token-counter-badge');
-    if (badge) {
+    if (badge && !currentUser) {
       badge.style.background = 'rgba(16, 185, 129, 0.15)';
       badge.style.borderColor = 'rgba(16, 185, 129, 0.5)';
       badge.style.color = '#34d399';
     }
-    showToast('⚡ JZAGENTIC AI Engine Online — Unlimited Plan & Real-Time Token Metering Aktif!');
+    showToast('⚡ JZAGENTIC AI Engine Online — Google Cloud & Token Quota Aktif!');
   } catch (e) {
     showToast('⚠️ Tidak dapat memeriksa status API');
   }

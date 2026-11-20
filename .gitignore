@@ -4,6 +4,7 @@ node_modules/
 # Secrets & Local Configurations (DO NOT PUSH)
 .api-keys.json
 .token-stats.json
+.users.json
 .env
 .env.local
 

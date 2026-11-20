@@ -10,6 +10,7 @@ const path = require('path');
 const os = require('os');
 const { exec } = require('child_process');
 const { streamAI, getProviderStatus, MODEL_MAP } = require('./ai-engine');
+const userStore = require('./user-store');
 
 const PORT = process.env.PORT || 3333;
 const WORKSPACE_DIR = path.join(__dirname, 'workspace');
@@ -134,6 +135,8 @@ let API_CONFIG = {
   deepseek: process.env.DEEPSEEK_API_KEY || '',
   ollamaUrl: process.env.OLLAMA_HOST || 'http://127.0.0.1:11434',
   ollamaModel: process.env.OLLAMA_MODEL || '',
+  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
 };
 
 // Load saved keys from disk
@@ -147,10 +150,20 @@ try {
     if (saved.deepseek) API_CONFIG.deepseek = saved.deepseek;
     if (saved.ollamaUrl) API_CONFIG.ollamaUrl = saved.ollamaUrl;
     if (saved.ollamaModel) API_CONFIG.ollamaModel = saved.ollamaModel;
+    if (saved.googleClientId) API_CONFIG.googleClientId = saved.googleClientId;
+    if (saved.googleClientSecret) API_CONFIG.googleClientSecret = saved.googleClientSecret;
     console.log('[Config] API keys loaded from .api-keys.json');
   }
 } catch (e) {
   console.log('[Config] No saved keys found, using env vars only');
+}
+
+// Helper: extract authenticated user from request header
+function getAuthUser(req) {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) return null;
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  return userStore.verifySessionToken(token);
 }
 
 function saveKeysToFile() {
@@ -296,6 +309,38 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/ai/stream' && req.method === 'POST') {
       const { message, fileContext, model, systemPrompt } = await readBody(req);
 
+      // Check authentication (Mandatory Google Login)
+      const authUser = getAuthUser(req);
+      if (!authUser) {
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        });
+        res.write(`data: ${JSON.stringify({
+          type: 'auth_required',
+          message: '🔒 Anda wajib masuk dengan Akun Google untuk menggunakan AI Agent JZAGENTIC.',
+        })}\n\n`);
+        res.end();
+        return;
+      }
+
+      // Check user token quota
+      if (authUser.tokenBalance !== 'UNLIMITED' && authUser.tokenBalance <= 0) {
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        });
+        res.write(`data: ${JSON.stringify({
+          type: 'quota_exhausted',
+          message: '⚠️ Kuota token gratis Anda telah habis! Silakan upgrade ke versi Pro untuk melanjutkan percakapan.',
+          user: authUser,
+        })}\n\n`);
+        res.end();
+        return;
+      }
+
       // Build messages for the AI
       const aiMessages = [];
 
@@ -397,6 +442,11 @@ const server = http.createServer(async (req, res) => {
           // Persist stats to disk
           saveTokenStats();
 
+          const totalUsed = inputTokens + outputTokens;
+          // Deduct tokens from user's account
+          const deduction = userStore.deductTokens(authUser.id, totalUsed);
+          const updatedUser = deduction.user || authUser;
+
           try {
             res.write(`data: ${JSON.stringify({
               type: 'done',
@@ -404,9 +454,10 @@ const server = http.createServer(async (req, res) => {
               tokenBreakdown: {
                 input: inputTokens,
                 output: outputTokens,
-                total: inputTokens + outputTokens,
+                total: totalUsed,
               },
               stats: getTokenStats(),
+              user: updatedUser,
               model: activeModel.name,
             })}\n\n`);
             res.end();
@@ -465,6 +516,131 @@ const server = http.createServer(async (req, res) => {
           sendJSON(res, 200, { success: true, reply: `⚠️ Error: ${err.message}`, chatItem: { id: 'msg-' + Date.now(), user: message, agent: `Error: ${err.message}`, model: activeModel.name, timestamp: new Date().toISOString() } });
         }
       );
+      return;
+    }
+
+    // ===== AUTH: GOOGLE CONFIG =====
+    if (pathname === '/api/auth/config') {
+      sendJSON(res, 200, {
+        googleClientId: API_CONFIG.googleClientId,
+        configured: Boolean(API_CONFIG.googleClientId),
+      });
+      return;
+    }
+
+    // ===== AUTH: GOOGLE SIGN-IN / VERIFY TOKEN =====
+    if (pathname === '/api/auth/google/verify' && req.method === 'POST') {
+      try {
+        const { credential } = await readBody(req);
+        if (!credential) {
+          sendJSON(res, 400, { success: false, error: 'NO_CREDENTIAL_SUPPLIED' });
+          return;
+        }
+        const profile = await userStore.verifyGoogleToken(credential);
+        const user = userStore.findOrCreateUser(profile);
+        const sessionToken = userStore.createSessionToken(user);
+        sendJSON(res, 200, { success: true, user, sessionToken });
+      } catch (err) {
+        console.error('[Google Auth Error]', err.message);
+        sendJSON(res, 401, { success: false, error: err.message });
+      }
+      return;
+    }
+
+    // ===== AUTH: CURRENT USER PROFILE & BALANCE =====
+    if (pathname === '/api/auth/me') {
+      const user = getAuthUser(req);
+      if (!user) {
+        sendJSON(res, 401, { authenticated: false, message: 'Not logged in' });
+      } else {
+        sendJSON(res, 200, { authenticated: true, user });
+      }
+      return;
+    }
+
+    // ===== PLANS & MONETIZATION PRICING =====
+    if (pathname === '/api/plans') {
+      sendJSON(res, 200, {
+        plans: [
+          {
+            id: 'free',
+            name: 'Free Starter',
+            tokens: '50.000 Tokens',
+            tokenNum: 50000,
+            priceRp: 0,
+            priceLabel: 'GRATIS',
+            badge: 'BONUS AWAL',
+            desc: 'Diberikan otomatis saat login pertama kali dengan Akun Google.',
+            features: [
+              '50.000 Token AI Siap Pakai',
+              'Akses 20 Model AI (Claude, GPT, Gemini, DeepSeek)',
+              'IDE & Live Web Code Runner',
+              'Mobile Mirroring ke HP'
+            ],
+          },
+          {
+            id: 'starter',
+            name: 'Starter Pack',
+            tokens: '250.000 Tokens',
+            tokenNum: 250000,
+            priceRp: 20000,
+            priceLabel: 'Rp 20.000',
+            badge: 'EKONOMIS',
+            desc: 'Paket hemat untuk riset, coding harian, dan tugas.',
+            features: [
+              '+250.000 Token AI Tanpa Kadaluarsa',
+              'Prioritas Respons AI Lebih Cepat',
+              'Akses Claude 3.7 & GPT-4o',
+              'Aktif Selamanya (No Expiry)'
+            ],
+          },
+          {
+            id: 'pro',
+            name: 'Pro Developer',
+            tokens: '1.000.000 Tokens',
+            tokenNum: 1000000,
+            priceRp: 49000,
+            priceLabel: 'Rp 49.000',
+            badge: 'BEST SELLER',
+            desc: 'Pilihan terbaik developer untuk build full-stack app secara otonom.',
+            features: [
+              '+1.000.000 Token AI Super Besar',
+              'Akses DeepSeek R1 & Claude 3.7 Sonnet',
+              'Multi-File Auto Refactor & Bug Fixer',
+              'Dukungan Prioritas WhatsApp 24/7'
+            ],
+          },
+          {
+            id: 'vip',
+            name: 'VIP Unlimited',
+            tokens: 'UNLIMITED (Tanpa Batas)',
+            tokenNum: Infinity,
+            priceRp: 99000,
+            priceLabel: 'Rp 99.000 / bln',
+            badge: 'UNLIMITED VIP',
+            desc: 'Akses tanpa batas kuota ke seluruh 20 model AI.',
+            features: [
+              'Token 100% UNLIMITED Selama 30 Hari',
+              'Bebas Tanya & Coding Sepuasnya',
+              'Autonomous Multi-Agent Mode',
+              'Akses Fitur Eksklusif Mendatang'
+            ],
+          },
+        ],
+        whatsappAdmin: '6285156826620',
+      });
+      return;
+    }
+
+    // ===== ADMIN TOPUP / UPGRADE ENDPOINT =====
+    if (pathname === '/api/admin/topup' && req.method === 'POST') {
+      const { secret, email, tokens, tier } = await readBody(req);
+      if (secret !== 'jzadmin2026' && secret !== API_CONFIG.googleClientSecret) {
+        sendJSON(res, 403, { success: false, error: 'INVALID_ADMIN_SECRET' });
+        return;
+      }
+      const result = userStore.topupUser(email, tokens, tier);
+      sendJSON(res, result.success ? 200 : 400, result);
       return;
     }
 
