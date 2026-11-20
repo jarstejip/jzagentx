@@ -1542,8 +1542,8 @@ async function openQrisModal(plan) {
   // Render QRIS (Image if set, else SVG QRIS placeholder)
   const qrisSlot = document.getElementById('qris-image-slot');
   if (qrisSlot) {
-    if (paySettings.qrisImageUrl && paySettings.qrisImageUrl.startsWith('http')) {
-      qrisSlot.innerHTML = `<img src="${paySettings.qrisImageUrl}" alt="QRIS" style="width:100%; height:100%; object-fit:contain;">`;
+    if (paySettings.qrisImageUrl) {
+      qrisSlot.innerHTML = `<img src="${paySettings.qrisImageUrl}" alt="QRIS ${paySettings.bankHolder}" style="width:100%; height:100%; object-fit:contain; border-radius:6px; cursor:pointer;" title="Klik untuk perbesar QRIS" onclick="window.open('${paySettings.qrisImageUrl}', '_blank')">`;
     } else {
       // Dynamic SVG QRIS Code with JZ Logo in center
       qrisSlot.innerHTML = `

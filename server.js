@@ -21,11 +21,11 @@ const PAYMENT_CONFIG_FILE = path.join(__dirname, '.payment-config.json');
 
 let PAYMENT_CONFIG = {
   whatsappAdmin: '6285156826620',
-  bankName: 'BCA / Dana / QRIS',
-  bankAccount: 'Hubungi Admin via WhatsApp',
-  bankHolder: 'JZAGENTIC Official',
-  qrisImageUrl: '',
-  qrisNote: 'Scan barcode QRIS dengan BCA Mobile, GoPay, OVO, Dana, ShopeePay, atau m-Banking Anda.',
+  bankName: 'QRIS Nasional (Semua Bank & E-Wallet)',
+  bankAccount: 'ID1025378804435',
+  bankHolder: 'TOKO Kelontong jars',
+  qrisImageUrl: '/qris.jpg',
+  qrisNote: 'Scan barcode QRIS dengan BCA Mobile, Livin Mandiri, BRImo, GoPay, OVO, Dana, ShopeePay atau e-wallet apa saja.',
 };
 
 try {
