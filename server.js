@@ -560,15 +560,20 @@ const server = http.createServer(async (req, res) => {
     // ===== AUTH: GOOGLE SIGN-IN / VERIFY TOKEN =====
     if (pathname === '/api/auth/google/verify' && req.method === 'POST') {
       try {
-        const { credential } = await readBody(req);
+        const { credential, clientWallet } = await readBody(req);
         if (!credential) {
           sendJSON(res, 400, { success: false, error: 'NO_CREDENTIAL_SUPPLIED' });
           return;
         }
         const profile = await userStore.verifyGoogleToken(credential);
-        const user = userStore.findOrCreateUser(profile);
+        const user = userStore.findOrCreateUser(profile, clientWallet);
         const sessionToken = userStore.createSessionToken(user);
-        sendJSON(res, 200, { success: true, user, sessionToken });
+        sendJSON(res, 200, {
+          success: true,
+          user,
+          isNewUser: Boolean(user.isNewUser),
+          sessionToken,
+        });
       } catch (err) {
         console.error('[Google Auth Error]', err.message);
         sendJSON(res, 401, { success: false, error: err.message });

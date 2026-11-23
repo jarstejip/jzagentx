@@ -6,8 +6,10 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const os = require('os');
 
 const USERS_FILE = path.join(__dirname, '.users.json');
+const TMP_USERS_FILE = path.join(os.tmpdir(), 'jzagentic_users.json');
 
 // Default initial token bonus for every new Google sign-in
 const DEFAULT_INITIAL_TOKENS = 50000;
@@ -23,27 +25,45 @@ const TIERS = {
 // In-memory cache of users
 let users = {};
 
-// Load saved users from disk
+// Load saved users from disk (checks workspace first, then tmpdir for serverless persistence)
 function loadUsers() {
   try {
     if (fs.existsSync(USERS_FILE)) {
       const data = fs.readFileSync(USERS_FILE, 'utf8');
       users = JSON.parse(data);
-      console.log(`[Users] Loaded ${Object.keys(users).length} users from disk.`);
+      console.log(`[Users] Loaded ${Object.keys(users).length} users from workspace disk.`);
+      return;
     }
   } catch (e) {
-    console.error('[Users] Error loading users, initializing empty store:', e.message);
-    users = {};
+    // Ignore and fallback
   }
+
+  try {
+    if (fs.existsSync(TMP_USERS_FILE)) {
+      const data = fs.readFileSync(TMP_USERS_FILE, 'utf8');
+      users = JSON.parse(data);
+      console.log(`[Users] Loaded ${Object.keys(users).length} users from tmp disk.`);
+      return;
+    }
+  } catch (e) {
+    // Ignore
+  }
+
+  users = {};
 }
 
-// Persist users to disk
+// Persist users to disk (dual persistence for local & serverless)
 function saveUsers() {
   try {
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
   } catch (e) {
-    // In serverless / read-only environment, keep in-memory
-    console.warn('[Users] Could not persist to disk (may be serverless):', e.message);
+    // Expected on serverless read-only filesystem
+  }
+
+  try {
+    fs.writeFileSync(TMP_USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
+  } catch (e) {
+    // Fallback in-memory
   }
 }
 
@@ -119,56 +139,110 @@ function decodeJwtPayload(jwt) {
 
 /**
  * Find or create a user by Google profile
+ * Supports clientWallet parameter to restore token balance on serverless restarts
  */
-function findOrCreateUser(profile) {
-  const userId = profile.sub || profile.email;
+function findOrCreateUser(profile, clientWallet = null) {
+  const normEmail = (profile.email || '').toLowerCase().trim();
+  const userId = profile.sub || normEmail;
+  
+  // Try finding user by sub ID, email key, or email property
   let user = users[userId];
-
-  if (!user) {
-    // Check if user exists by email
-    const existingKey = Object.keys(users).find(k => users[k].email === profile.email);
+  if (!user && normEmail) {
+    user = users[normEmail];
+  }
+  if (!user && normEmail) {
+    const existingKey = Object.keys(users).find(k => {
+      const u = users[k];
+      return u && u.email && u.email.toLowerCase().trim() === normEmail;
+    });
     if (existingKey) {
       user = users[existingKey];
-      user.id = userId; // update to sub id
-      if (profile.picture) user.picture = profile.picture;
-      if (profile.name) user.name = profile.name;
     }
   }
 
+  let isNewUser = false;
+
   if (!user) {
-    // Create new user with 50,000 free tokens!
-    user = {
-      id: userId,
-      email: profile.email,
-      name: profile.name || profile.email.split('@')[0],
-      picture: profile.picture || '',
-      tier: 'free',
-      tokenBalance: DEFAULT_INITIAL_TOKENS,
-      tokensUsed: 0,
-      lifetimeTokens: 0,
-      requestsCount: 0,
-      createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString(),
-    };
+    // Check if clientWallet has existing balance for this returning user (e.g. serverless cold start)
+    if (clientWallet && clientWallet.email && clientWallet.email.toLowerCase().trim() === normEmail && typeof clientWallet.tokenBalance === 'number') {
+      console.log(`[Users] Restoring returning user ${normEmail} from client wallet with balance: ${clientWallet.tokenBalance}`);
+      user = {
+        id: userId,
+        email: normEmail,
+        name: profile.name || normEmail.split('@')[0],
+        picture: profile.picture || '',
+        tier: clientWallet.tier || 'free',
+        tokenBalance: clientWallet.tokenBalance,
+        tokensUsed: clientWallet.tokensUsed || 0,
+        lifetimeTokens: clientWallet.lifetimeTokens || (clientWallet.tokensUsed || 0),
+        requestsCount: clientWallet.requestsCount || 0,
+        createdAt: clientWallet.createdAt || new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+      };
+      isNewUser = false;
+    } else {
+      // Brand new registration: grant 50,000 initial tokens
+      user = {
+        id: userId,
+        email: normEmail,
+        name: profile.name || normEmail.split('@')[0],
+        picture: profile.picture || '',
+        tier: 'free',
+        tokenBalance: DEFAULT_INITIAL_TOKENS,
+        tokensUsed: 0,
+        lifetimeTokens: 0,
+        requestsCount: 0,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+      };
+      isNewUser = true;
+      console.log(`🎉 [New User Registered] ${user.email} received ${DEFAULT_INITIAL_TOKENS.toLocaleString()} Free Tokens!`);
+    }
+
     users[userId] = user;
+    if (normEmail) users[normEmail] = user;
     saveUsers();
-    console.log(`🎉 [New User Registered] ${user.email} received ${DEFAULT_INITIAL_TOKENS.toLocaleString()} Free Tokens!`);
   } else {
-    // Update existing user login time
+    // User already exists! SISA TOKEN SEBELUMNYA HARUS TETAP ADA!
+    isNewUser = false;
+    user.id = userId;
     user.lastLogin = new Date().toISOString();
     if (profile.picture) user.picture = profile.picture;
     if (profile.name) user.name = profile.name;
+
+    // Sync clientWallet if client recorded more recent token consumption
+    if (clientWallet && clientWallet.email && clientWallet.email.toLowerCase().trim() === normEmail && typeof clientWallet.tokenBalance === 'number') {
+      if (clientWallet.tokenBalance < user.tokenBalance) {
+        user.tokenBalance = clientWallet.tokenBalance;
+      }
+      if (clientWallet.tokensUsed > (user.tokensUsed || 0)) {
+        user.tokensUsed = clientWallet.tokensUsed;
+      }
+    }
+
+    users[userId] = user;
+    if (normEmail) users[normEmail] = user;
     saveUsers();
   }
 
-  return sanitizeUser(user);
+  const sanitized = sanitizeUser(user);
+  sanitized.isNewUser = isNewUser;
+  return sanitized;
 }
 
 /**
- * Get user by ID or session
+ * Get user by ID or email
  */
 function getUser(userId) {
-  const user = users[userId];
+  if (!userId) return null;
+  let user = users[userId];
+  if (!user && typeof userId === 'string' && userId.includes('@')) {
+    user = users[userId.toLowerCase().trim()];
+  }
+  if (!user) {
+    const key = Object.keys(users).find(k => users[k] && users[k].email && users[k].email.toLowerCase() === String(userId).toLowerCase());
+    if (key) user = users[key];
+  }
   return user ? sanitizeUser(user) : null;
 }
 
@@ -176,14 +250,31 @@ function getUser(userId) {
  * Get internal user record (mutable)
  */
 function getRawUser(userId) {
-  return users[userId] || null;
+  if (!userId) return null;
+  let user = users[userId];
+  if (!user && typeof userId === 'string' && userId.includes('@')) {
+    user = users[userId.toLowerCase().trim()];
+  }
+  if (!user) {
+    const key = Object.keys(users).find(k => users[k] && users[k].email && users[k].email.toLowerCase() === String(userId).toLowerCase());
+    if (key) user = users[key];
+  }
+  return user || null;
 }
 
 /**
  * Deduct tokens from user
  */
 function deductTokens(userId, tokenCount) {
-  const user = users[userId];
+  let user = users[userId];
+  if (!user && typeof userId === 'string' && userId.includes('@')) {
+    user = users[userId.toLowerCase().trim()];
+  }
+  if (!user) {
+    const key = Object.keys(users).find(k => users[k] && users[k].email && users[k].email.toLowerCase() === String(userId).toLowerCase());
+    if (key) user = users[key];
+  }
+
   if (!user) {
     return { success: false, error: 'USER_NOT_FOUND' };
   }

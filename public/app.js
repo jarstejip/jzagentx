@@ -1359,9 +1359,58 @@ if (openPricingBtn) openPricingBtn.addEventListener('click', openPricingModal);
 if (closePricingBtn) closePricingBtn.addEventListener('click', closePricingModal);
 if (tokenCounterBadge) tokenCounterBadge.addEventListener('click', openPricingModal);
 
+function saveUserWallet(user) {
+  if (!user || !user.email) return;
+  try {
+    const normEmail = user.email.toLowerCase().trim();
+    const wallet = {
+      email: normEmail,
+      tokenBalance: user.tokenBalance,
+      tokensUsed: user.tokensUsed || 0,
+      tier: user.tier || 'free',
+      tierName: user.tierName || 'Free Starter',
+      isVip: Boolean(user.isVip),
+      updatedAt: Date.now(),
+    };
+    localStorage.setItem('jz_wallet_' + normEmail, JSON.stringify(wallet));
+    localStorage.setItem('jz_last_email', normEmail);
+  } catch (e) {}
+}
+
+function getCachedUserWallet(email = null) {
+  try {
+    const targetEmail = (email || localStorage.getItem('jz_last_email') || '').toLowerCase().trim();
+    if (targetEmail) {
+      const raw = localStorage.getItem('jz_wallet_' + targetEmail);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.tokenBalance === 'number') {
+          return parsed;
+        }
+      }
+    }
+
+    // Fallback: check any stored wallet in localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('jz_wallet_')) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed.tokenBalance === 'number') {
+            return parsed;
+          }
+        }
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 function updateUserState(user) {
   if (!user) return;
   currentUser = user;
+  saveUserWallet(currentUser);
   renderUserNavbar(currentUser);
   updateTokenTicker();
   updatePricingUserBanner();
@@ -1909,11 +1958,12 @@ function renderGoogleButton() {
 
         container.innerHTML = '';
         google.accounts.id.renderButton(container, {
-          theme: 'filled_black',
+          theme: 'outline',
           size: 'large',
-          text: 'signin_with',
-          shape: 'rectangular',
-          width: 280,
+          text: 'continue_with',
+          shape: 'pill',
+          width: 300,
+          logo_alignment: 'left',
         });
       } catch (e) {
         console.warn('Google One Tap init issue:', e.message);
@@ -1927,18 +1977,33 @@ function renderGoogleButton() {
 
 async function handleGoogleCredentialResponse(response) {
   try {
+    // Read cached wallet if any (so returning users keep their remaining balance!)
+    const clientWallet = getCachedUserWallet();
+
     const res = await fetch('/api/auth/google/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ credential: response.credential }),
+      body: JSON.stringify({ credential: response.credential, clientWallet }),
     });
     const data = await res.json();
     if (data.success && data.user) {
       sessionToken = data.sessionToken;
       localStorage.setItem('jz_session_token', sessionToken);
+      
+      // Save wallet in localStorage
+      saveUserWallet(data.user);
+
       updateUserState(data.user);
       hideAuthModal();
-      showToast(`🎉 Berhasil masuk! Selamat datang ${data.user.name}, 50.000 Token Gratis telah aktif!`);
+
+      if (data.isNewUser) {
+        showToast(`🎉 Selamat datang ${data.user.name}! Bonus 50.000 Token Gratis telah aktif!`);
+      } else {
+        const bal = (data.user.isVip || data.user.tokenBalance === 'UNLIMITED')
+          ? 'UNLIMITED'
+          : new Intl.NumberFormat('id-ID').format(data.user.tokenBalance);
+        showToast(`👋 Selamat datang kembali, ${data.user.name}! Sisa kuota Anda: ${bal} Token.`);
+      }
     } else {
       showToast('Gagal verifikasi Google: ' + (data.error || 'Unknown'));
     }

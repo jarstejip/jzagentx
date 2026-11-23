@@ -1532,6 +1532,146 @@ body {
 }
 
 /* ==================== AUTH & MONETIZATION STYLES ==================== */
+.auth-modal-card {
+  max-width: 440px !important;
+  width: 100%;
+  background: linear-gradient(180deg, #16161b 0%, #0d0d10 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.9), 0 0 1px 1px rgba(255, 255, 255, 0.08) !important;
+  overflow: hidden;
+  text-align: center;
+}
+
+.auth-modal-body {
+  padding: 32px 26px 26px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.auth-brand-badge {
+  width: 52px;
+  height: 52px;
+  background: #ffffff;
+  color: #000000;
+  border-radius: 14px;
+  font-weight: 900;
+  font-size: 1.45rem;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.2);
+}
+
+.auth-modal-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+}
+
+.auth-modal-sub {
+  font-size: 0.84rem;
+  color: #a1a1aa;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  max-width: 340px;
+}
+
+.auth-token-info-card {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 22px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-token-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.auth-token-icon {
+  font-size: 1.15rem;
+  line-height: 1.2;
+}
+
+.auth-token-text strong {
+  display: block;
+  font-size: 0.84rem;
+  color: #34d399;
+  margin-bottom: 2px;
+}
+
+.auth-token-text p {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.auth-token-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  width: 100%;
+}
+
+.auth-google-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+#google-signin-btn-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+  width: 100%;
+}
+
+.google-btn-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 18px;
+  border-radius: 20px;
+}
+
+.auth-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.auth-footer-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #71717a;
+  margin-top: 4px;
+}
 .upgrade-btn-pill {
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #000000;
@@ -2436,15 +2576,21 @@ body {
     font-size: 0.78rem !important;
   }
 
-  /* Auth modal */
-  #auth-modal-overlay .models-modal {
-    border-radius: 0 !important;
-    max-height: 100vh !important;
-    height: 100vh;
+  /* Auth modal responsive */
+  #auth-modal-overlay {
+    align-items: center !important;
+    padding: 16px !important;
   }
 
-  #auth-modal-overlay .models-modal > div {
-    padding: 24px 16px 20px !important;
+  #auth-modal-overlay .models-modal {
+    border-radius: 20px !important;
+    max-height: 92vh !important;
+    height: auto !important;
+    width: 100% !important;
+  }
+
+  #auth-modal-overlay .auth-modal-body {
+    padding: 24px 18px 20px !important;
   }
 
   /* Toast */

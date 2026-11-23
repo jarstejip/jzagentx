@@ -501,33 +501,52 @@ loading...
 
   <!-- ==================== VIEW 6: GOOGLE AUTHENTICATION MODAL (Wajib Login) ==================== -->
   <div class="modal-overlay" id="auth-modal-overlay">
-    <div class="models-modal" style="max-width: 460px; text-align: center; border-color: rgba(255,255,255,0.2);">
-      <div style="padding: 32px 24px 28px;">
-        <div style="width: 52px; height: 52px; background: #ffffff; color: #000000; border-radius: 12px; font-weight: 900; font-size: 1.4rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-          JZ
+    <div class="models-modal auth-modal-card">
+      <div class="auth-modal-body">
+        <!-- Brand Icon with subtle glow -->
+        <div class="auth-brand-badge">
+          <span>JZ</span>
         </div>
-        <h2 style="font-size: 1.35rem; color: #ffffff; margin-bottom: 6px;">Masuk ke JZAGENTIC</h2>
-        <p style="font-size: 0.85rem; color: #a1a1aa; margin-bottom: 20px; line-height: 1.45;">
-          Akses 20 Model AI Otonom, Multi-File Code Editor, dan Real-Time Runner dengan akun Google Anda.
+
+        <h2 class="auth-modal-title">Masuk ke JZAGENTIC</h2>
+        <p class="auth-modal-sub">
+          Akses 20 Model AI Otonom & IDE Developer. Masuk untuk melanjutkan sesi dan kuota token Anda.
         </p>
 
-        <!-- Bonus Card -->
-        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 10px; padding: 12px; margin-bottom: 24px; text-align: left;">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-            <span style="font-size: 1.1rem;">🎁</span>
-            <strong style="color: #34d399; font-size: 0.88rem;">Bonus Pengguna Baru: 50.000 Token Gratis</strong>
+        <!-- Token & Account Status Card -->
+        <div class="auth-token-info-card">
+          <div class="auth-token-info-row">
+            <div class="auth-token-icon">🎁</div>
+            <div class="auth-token-text">
+              <strong>Bonus Pengguna Baru: 50.000 Token Gratis</strong>
+              <p>Otomatis aktif untuk akun baru agar bisa mencoba Claude 3.7, GPT-4o, & DeepSeek R1.</p>
+            </div>
           </div>
-          <p style="font-size: 0.76rem; color: #94a3b8; margin: 0;">
-            Otomatis terisi ke akun Anda saat pertama kali masuk untuk mencoba Claude 3.7, GPT-4o, dan DeepSeek R1.
-          </p>
+          <div class="auth-token-divider"></div>
+          <div class="auth-token-info-row">
+            <div class="auth-token-icon">🪙</div>
+            <div class="auth-token-text">
+              <strong style="color: #38bdf8;">Pengguna Lama / Login Ulang</strong>
+              <p>Sisa kuota token dan riwayat akun Anda otomatis tersimpan & tersinkronisasi saat login.</p>
+            </div>
+          </div>
         </div>
 
         <!-- Google Sign-In Official Button Container -->
-        <div id="google-signin-btn-container" style="display: flex; justify-content: center; min-height: 44px; margin-bottom: 16px;"></div>
+        <div class="auth-google-wrapper">
+          <div id="google-signin-btn-container">
+            <div class="google-btn-loading">
+              <span class="auth-spinner"></span>
+              <span>Menyiapkan Google Sign-In...</span>
+            </div>
+          </div>
+        </div>
 
-        <p style="font-size: 0.72rem; color: #71717a; margin-top: 14px;">
-          🔒 Aman & Terenkripsi. Kami hanya membaca nama, email, dan foto profil publik Anda via Google Cloud Console.
-        </p>
+        <!-- Security / Privacy Trust Footer -->
+        <div class="auth-footer-trust">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span>Terenkripsi & Terverifikasi Resmi via Google Cloud Identity</span>
+        </div>
       </div>
     </div>
   </div>
