@@ -160,12 +160,31 @@ function streamGemini(apiKey, modelName, messages, onToken, onDone, onError, sys
     const rawContents = [];
     for (const m of messages) {
       if (m.role === 'system') continue;
-      const text = (m.content || '').trim();
-      if (!text) continue;
-      rawContents.push({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text }]
-      });
+      const text = (typeof m.content === 'string' ? m.content : '').trim();
+      const parts = [];
+      if (text) {
+        parts.push({ text });
+      }
+      if (m.images && Array.isArray(m.images) && m.images.length > 0) {
+        for (const img of m.images) {
+          let b64 = img.base64 || '';
+          if (b64.includes(',')) b64 = b64.split(',')[1];
+          if (b64) {
+            parts.push({
+              inlineData: {
+                mimeType: img.mimeType || 'image/jpeg',
+                data: b64
+              }
+            });
+          }
+        }
+      }
+      if (parts.length > 0) {
+        rawContents.push({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts
+        });
+      }
     }
 
     if (rawContents.length === 0) {
@@ -377,11 +396,28 @@ function streamOllama(ollamaUrl, ollamaModel, messages, onToken, onDone, onError
  * 3. Stream from OpenRouter API
  */
 function streamOpenRouter(apiKey, modelId, messages, onToken, onDone, onError, systemPrompt) {
+  const formattedMessages = messages.map(m => {
+    if (m.images && Array.isArray(m.images) && m.images.length > 0) {
+      const content = [{ type: 'text', text: m.content || '' }];
+      for (const img of m.images) {
+        let b64 = img.base64 || '';
+        if (b64.includes(',')) b64 = b64.split(',')[1];
+        const mime = img.mimeType || 'image/jpeg';
+        content.push({
+          type: 'image_url',
+          image_url: { url: `data:${mime};base64,${b64}` }
+        });
+      }
+      return { role: m.role, content };
+    }
+    return m;
+  });
+
   const payload = JSON.stringify({
     model: modelId || 'anthropic/claude-sonnet-5.5',
     messages: [
       { role: 'system', content: systemPrompt || SYSTEM_PROMPT },
-      ...messages
+      ...formattedMessages
     ],
     stream: true,
     max_tokens: 3000,

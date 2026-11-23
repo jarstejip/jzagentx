@@ -336,7 +336,7 @@ const server = http.createServer(async (req, res) => {
   try {
     // ===== AI STREAMING ENDPOINT (THE CORE - REAL AI) =====
     if (pathname === '/api/ai/stream' && req.method === 'POST') {
-      const { message, fileContext, model, systemPrompt } = await readBody(req);
+      const { message, fileContext, model, systemPrompt, images, attachedFiles } = await readBody(req);
 
       // Check authentication (Mandatory Google Login)
       const authUser = getAuthUser(req);
@@ -385,12 +385,35 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
+      // Add attached documents/code files if provided by user
+      if (attachedFiles && Array.isArray(attachedFiles) && attachedFiles.length > 0) {
+        for (const f of attachedFiles) {
+          if (f.content) {
+            aiMessages.push({
+              role: 'user',
+              content: `[Lampiran File Pengguna: ${f.name}]\n\`\`\`\n${f.content.substring(0, 8000)}\n\`\`\``,
+            });
+            aiMessages.push({
+              role: 'assistant',
+              content: `Saya telah menerima dan membaca isi file ${f.name}.`,
+            });
+          }
+        }
+      }
+
       // Add recent conversation history (last 10 exchanges)
       const recentHistory = conversationHistory.slice(-20);
       aiMessages.push(...recentHistory);
 
-      // Add current user message
-      aiMessages.push({ role: 'user', content: message });
+      // Add current user message with vision images support
+      const currentUserMessage = { 
+        role: 'user', 
+        content: message || (images && images.length ? 'Tolong analisis dan jelaskan gambar/foto ini secara lengkap.' : '') 
+      };
+      if (images && Array.isArray(images) && images.length > 0) {
+        currentUserMessage.images = images;
+      }
+      aiMessages.push(currentUserMessage);
 
       // Setup SSE
       res.writeHead(200, {

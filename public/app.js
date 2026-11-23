@@ -598,7 +598,11 @@ document.getElementById('ide-agent-toggle').addEventListener('click', () => {
 
 // ==================== 5. REAL-TIME AI TOKEN STREAMING (UNLIMITED) ====================
 async function sendChatMessageStream(promptText, containerId = 'chat-feed-container') {
-  if (!promptText.trim()) return;
+  const attachmentsToSend = [...pendingAttachments];
+  clearAttachments();
+
+  const finalPrompt = (promptText || '').trim() || (attachmentsToSend.length > 0 ? 'Tolong analisis dan jelaskan lampiran/foto ini secara lengkap.' : '');
+  if (!finalPrompt) return;
 
   // Check mandatory authentication
   if (!currentUser || !sessionToken) {
@@ -616,12 +620,37 @@ async function sendChatMessageStream(promptText, containerId = 'chat-feed-contai
     welcomeHero.style.display = 'none';
   }
 
+  // Render attachment thumbnails inside user message card
+  let attachmentsHtml = '';
+  if (attachmentsToSend.length > 0) {
+    attachmentsHtml = `<div class="chat-message-attachments">` + 
+      attachmentsToSend.map(att => {
+        if (att.isImage) {
+          return `
+            <div class="chat-attachment-img-wrap" onclick="openImageLightbox('${att.dataUrl}', '${escapeHTML(att.name)}')">
+              <img src="${att.dataUrl}" class="chat-attachment-img" alt="${escapeHTML(att.name)}" title="Klik untuk perbesar">
+            </div>
+          `;
+        } else {
+          return `
+            <div class="chat-attachment-file-chip">
+              <span>📄</span>
+              <span>${escapeHTML(att.name)}</span>
+              <span style="font-size:0.7rem; color:#a1a1aa;">(${formatBytes(att.size)})</span>
+            </div>
+          `;
+        }
+      }).join('') +
+    `</div>`;
+  }
+
   // User card (Gemini neat right-aligned bubble)
   const userCard = document.createElement('div');
   userCard.className = 'chat-card user';
   userCard.innerHTML = `
     <div class="chat-header"><span>Anda ${currentTab === 'agent' ? '⚡ (Agent)' : '💬'}</span></div>
-    <div class="chat-body">${escapeHTML(promptText)}</div>
+    ${attachmentsHtml}
+    <div class="chat-body">${escapeHTML(finalPrompt)}</div>
   `;
   container.appendChild(userCard);
 
@@ -669,11 +698,20 @@ async function sendChatMessageStream(promptText, containerId = 'chat-feed-contai
         'Authorization': `Bearer ${sessionToken}`
       },
       body: JSON.stringify({
-        message: promptText,
+        message: finalPrompt,
         model: activeModel.name,
         fileContext: isAgent ? { path: currentFile, content: editorTextarea.value } : null,
         mode: currentTab,
-        systemPrompt: window.customSystemPrompt || null
+        systemPrompt: window.customSystemPrompt || null,
+        images: attachmentsToSend.filter(a => a.isImage).map(a => ({
+          name: a.name,
+          mimeType: a.type,
+          base64: a.base64
+        })),
+        attachedFiles: attachmentsToSend.filter(a => !a.isImage).map(a => ({
+          name: a.name,
+          content: a.textData || ''
+        }))
       }),
     });
 
@@ -840,11 +878,343 @@ function showTokenBreakdown(breakdown) {
   return detail;
 }
 
+// ==================== ATTACHMENT & ACTION MENU ENGINE ====================
+let pendingAttachments = [];
+
+function formatBytes(bytes, decimals = 1) {
+  if (!bytes) return '0 B';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+function renderAttachmentPreviews() {
+  const container = document.getElementById('attached-files-preview');
+  if (!container) return;
+
+  if (pendingAttachments.length === 0) {
+    container.innerHTML = '';
+    container.classList.remove('has-files');
+    return;
+  }
+
+  container.classList.add('has-files');
+  container.innerHTML = pendingAttachments.map(att => `
+    <div class="attachment-chip" id="att-chip-${att.id}">
+      ${att.isImage 
+        ? `<img src="${att.dataUrl}" class="attachment-thumb" alt="${escapeHTML(att.name)}" onclick="openImageLightbox('${att.dataUrl}', '${escapeHTML(att.name)}')">`
+        : `<div class="attachment-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.1rem;">📄</div>`
+      }
+      <div class="attachment-info">
+        <span class="attachment-name" title="${escapeHTML(att.name)}">${escapeHTML(att.name)}</span>
+        <span class="attachment-size">${formatBytes(att.size)}</span>
+      </div>
+      <button type="button" class="attachment-remove" onclick="removeAttachment('${att.id}')" title="Hapus lampiran">✕</button>
+    </div>
+  `).join('');
+}
+
+window.removeAttachment = function(id) {
+  pendingAttachments = pendingAttachments.filter(a => a.id !== id);
+  renderAttachmentPreviews();
+};
+
+function clearAttachments() {
+  pendingAttachments = [];
+  renderAttachmentPreviews();
+  const f1 = document.getElementById('chat-file-input');
+  const f2 = document.getElementById('chat-photo-input');
+  if (f1) f1.value = '';
+  if (f2) f2.value = '';
+}
+
+async function handleFilesSelected(fileList) {
+  if (!fileList || fileList.length === 0) return;
+
+  for (const file of Array.from(fileList)) {
+    if (file.size > 25 * 1024 * 1024) {
+      showToast(`File ${file.name} terlalu besar (maks 25MB)!`);
+      continue;
+    }
+
+    const isImage = file.type.startsWith('image/');
+    const id = 'att_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+
+    try {
+      if (isImage) {
+        const dataUrl = await readFileAsDataURL(file);
+        const base64 = dataUrl.split(',')[1] || '';
+        pendingAttachments.push({
+          id,
+          file,
+          name: file.name,
+          size: file.size,
+          type: file.type || 'image/jpeg',
+          isImage: true,
+          dataUrl,
+          base64
+        });
+        showToast(`📷 Foto ${file.name} berhasil dilampirkan!`);
+      } else {
+        const isText = file.type.startsWith('text/') || /\.(js|json|html|css|py|php|md|txt|sql|csv|ts)$/i.test(file.name);
+        let textData = '';
+        if (isText) {
+          textData = await readFileAsText(file);
+        }
+        const dataUrl = await readFileAsDataURL(file);
+        pendingAttachments.push({
+          id,
+          file,
+          name: file.name,
+          size: file.size,
+          type: file.type || 'application/octet-stream',
+          isImage: false,
+          dataUrl,
+          textData
+        });
+        showToast(`📄 File ${file.name} berhasil dilampirkan!`);
+      }
+    } catch (err) {
+      console.error('File read error:', err);
+      showToast(`Gagal membaca file ${file.name}`);
+    }
+  }
+
+  renderAttachmentPreviews();
+  closeAttachMenu();
+}
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+}
+
+function toggleAttachMenu() {
+  const menu = document.getElementById('attach-dropdown-menu');
+  const btn = document.getElementById('gemini-attach-btn');
+  if (!menu) return;
+  const isOpen = menu.classList.contains('show');
+  if (isOpen) {
+    closeAttachMenu();
+  } else {
+    menu.classList.add('show');
+    if (btn) btn.classList.add('active');
+  }
+}
+
+function closeAttachMenu() {
+  const menu = document.getElementById('attach-dropdown-menu');
+  const btn = document.getElementById('gemini-attach-btn');
+  if (menu) menu.classList.remove('show');
+  if (btn) btn.classList.remove('active');
+}
+
+// Lightbox modal functions
+window.openImageLightbox = function(url, caption = '') {
+  const modal = document.getElementById('image-lightbox-modal');
+  const img = document.getElementById('lightbox-img');
+  const cap = document.getElementById('lightbox-caption');
+  if (modal && img) {
+    img.src = url;
+    if (cap) cap.textContent = caption;
+    modal.classList.add('active');
+  }
+};
+
+window.closeImageLightbox = function() {
+  const modal = document.getElementById('image-lightbox-modal');
+  if (modal) modal.classList.remove('active');
+};
+
 // Hero Chat Actions
 const heroChatInput = document.getElementById('hero-chat-input');
 const heroSendBtn = document.getElementById('hero-send-btn');
+const geminiAttachBtn = document.getElementById('gemini-attach-btn');
+const chatFileInput = document.getElementById('chat-file-input');
+const chatPhotoInput = document.getElementById('chat-photo-input');
 const scrollToSearchBtn = document.getElementById('scroll-to-search-btn');
 const geminiScrollArea = document.getElementById('gemini-scroll-area');
+
+// Plus Attachment Button Click
+if (geminiAttachBtn) {
+  geminiAttachBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleAttachMenu();
+  });
+}
+
+// Close attach menu when clicking outside
+document.addEventListener('click', (e) => {
+  const container = document.getElementById('attach-menu-container');
+  if (container && !container.contains(e.target)) {
+    closeAttachMenu();
+  }
+});
+
+// Action Menu Item Handlers (Matching user screenshot)
+const menuUploadFile = document.getElementById('menu-upload-file');
+const menuUploadPhoto = document.getElementById('menu-upload-photo');
+const menuUploadDrive = document.getElementById('menu-upload-drive');
+const menuCreateImage = document.getElementById('menu-create-image');
+const menuCreateVideo = document.getElementById('menu-create-video');
+const menuCreateMusic = document.getElementById('menu-create-music');
+const menuCanvas = document.getElementById('menu-canvas');
+const menuDeepResearch = document.getElementById('menu-deep-research');
+const menuGuidedLearning = document.getElementById('menu-guided-learning');
+const personalIntelToggle = document.getElementById('personal-intel-toggle');
+
+if (menuUploadFile && chatFileInput) {
+  menuUploadFile.addEventListener('click', () => {
+    chatFileInput.click();
+  });
+}
+
+if (menuUploadPhoto && chatPhotoInput) {
+  menuUploadPhoto.addEventListener('click', () => {
+    chatPhotoInput.click();
+  });
+}
+
+if (chatFileInput) {
+  chatFileInput.addEventListener('change', (e) => {
+    handleFilesSelected(e.target.files);
+  });
+}
+
+if (chatPhotoInput) {
+  chatPhotoInput.addEventListener('change', (e) => {
+    handleFilesSelected(e.target.files);
+  });
+}
+
+if (menuUploadDrive) {
+  menuUploadDrive.addEventListener('click', () => {
+    closeAttachMenu();
+    const driveUrl = prompt('Masukkan tautan Google Drive / Docs atau Cloud URL publik:');
+    if (driveUrl && driveUrl.trim()) {
+      heroChatInput.value = (heroChatInput.value ? heroChatInput.value + '\n\n' : '') + `[Konteks Google Drive: ${driveUrl.trim()}] Tolong baca dan analisis dokumen ini.`;
+      heroChatInput.focus();
+      showToast('☁️ Tautan Google Drive ditambahkan ke percakapan!');
+    }
+  });
+}
+
+if (menuCreateImage) {
+  menuCreateImage.addEventListener('click', () => {
+    closeAttachMenu();
+    heroChatInput.value = 'Buatkan prompt gambar visual berkualitas tinggi bertema: ';
+    heroChatInput.focus();
+    showToast('🎨 Mode Buat Gambar AI diaktifkan!');
+  });
+}
+
+if (menuCreateVideo) {
+  menuCreateVideo.addEventListener('click', () => {
+    closeAttachMenu();
+    showToast('🔒 Fitur Buat Video AI (Sora / Veo 2) eksklusif untuk paket VIP Unlimited!');
+    openPricingModal();
+  });
+}
+
+if (menuCreateMusic) {
+  menuCreateMusic.addEventListener('click', () => {
+    closeAttachMenu();
+    heroChatInput.value = 'Buatkan struktur komposisi dan prompt musik AI bertema: ';
+    heroChatInput.focus();
+    showToast('🎵 Mode Buat Musik AI diaktifkan!');
+  });
+}
+
+if (menuCanvas) {
+  menuCanvas.addEventListener('click', () => {
+    closeAttachMenu();
+    switchTab('ide');
+    showToast('🎨 Beralih ke Canvas IDE Multi-File Code Editor!');
+  });
+}
+
+if (menuDeepResearch) {
+  menuDeepResearch.addEventListener('click', () => {
+    closeAttachMenu();
+    heroChatInput.value = '[Deep Research Autonomous] Lakukan riset mendalam secara komprehensif mengenai: ';
+    heroChatInput.focus();
+    showToast('⚛ Mode Deep Research diaktifkan: AI akan menganalisis secara mendalam!');
+  });
+}
+
+if (menuGuidedLearning) {
+  menuGuidedLearning.addEventListener('click', () => {
+    closeAttachMenu();
+    heroChatInput.value = 'Bimbing saya langkah demi langkah secara terpandu untuk memahami: ';
+    heroChatInput.focus();
+    showToast('📖 Mode Pembelajaran Terpandu diaktifkan!');
+  });
+}
+
+if (personalIntelToggle) {
+  // Load saved state
+  const savedIntel = localStorage.getItem('jz_personal_intel');
+  if (savedIntel !== null) {
+    personalIntelToggle.checked = savedIntel === 'true';
+  }
+  personalIntelToggle.addEventListener('change', (e) => {
+    localStorage.setItem('jz_personal_intel', e.target.checked);
+    showToast(e.target.checked ? '✨ Kecerdasan Personal (Labs) diaktifkan!' : 'Kecerdasan Personal dinonaktifkan.');
+  });
+}
+
+// Paste Image from Clipboard Support (Ctrl+V)
+document.addEventListener('paste', (e) => {
+  const items = (e.clipboardData || e.originalEvent.clipboardData)?.items;
+  if (!items) return;
+  const files = [];
+  for (const item of items) {
+    if (item.type.indexOf('image') !== -1) {
+      const file = item.getAsFile();
+      if (file) files.push(file);
+    }
+  }
+  if (files.length > 0) {
+    e.preventDefault();
+    handleFilesSelected(files);
+    showToast('📋 Gambar dari clipboard berhasil ditempel!');
+  }
+});
+
+// Drag and drop support
+const dropZone = document.querySelector('.gemini-bottom-bar');
+if (dropZone) {
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = '#38bdf8';
+  });
+  dropZone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = '';
+  });
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = '';
+    if (e.dataTransfer && e.dataTransfer.files) {
+      handleFilesSelected(e.dataTransfer.files);
+    }
+  });
+}
 
 // Auto-expand textarea as user types (Gemini style)
 if (heroChatInput) {
