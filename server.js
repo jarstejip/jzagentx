@@ -192,7 +192,15 @@ function getAuthUser(req) {
   const authHeader = req.headers['authorization'];
   if (!authHeader) return null;
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-  return userStore.verifySessionToken(token);
+
+  let clientWallet = null;
+  if (req.headers['x-client-wallet']) {
+    try {
+      clientWallet = JSON.parse(req.headers['x-client-wallet']);
+    } catch (e) {}
+  }
+
+  return userStore.verifySessionToken(token, clientWallet);
 }
 
 function saveKeysToFile() {

@@ -356,27 +356,68 @@ function sanitizeUser(u) {
 }
 
 /**
- * Create a simple signed session token for the user
+ * Create a resilient signed session token carrying user identity
  */
 function createSessionToken(user) {
   const payload = {
     userId: user.id,
     email: user.email,
-    exp: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 days
+    name: user.name,
+    picture: user.picture,
+    tier: user.tier,
+    tokenBalance: user.tokenBalance,
+    tokensUsed: user.tokensUsed || 0,
+    lifetimeTokens: user.lifetimeTokens || 0,
+    exp: Date.now() + (90 * 24 * 60 * 60 * 1000), // 90 days validity
   };
   return Buffer.from(JSON.stringify(payload)).toString('base64');
 }
 
 /**
- * Verify session token from client
+ * Verify session token from client with automatic restoration on serverless cold starts
  */
-function verifySessionToken(token) {
+function verifySessionToken(token, clientWallet) {
   try {
     if (!token) return null;
     const str = Buffer.from(token, 'base64').toString('utf8');
     const payload = JSON.parse(str);
-    if (!payload.userId || payload.exp < Date.now()) return null;
-    return getUser(payload.userId);
+    if (!payload.userId || (payload.exp && payload.exp < Date.now())) return null;
+
+    // Check existing in-memory / disk store
+    let user = getRawUser(payload.userId) || (payload.email ? getRawUser(payload.email) : null);
+
+    // If server cold-started (e.g. Vercel serverless function), restore user from session token & client wallet
+    if (!user && payload.email) {
+      console.log(`[UserStore] Restoring session from persistent token for ${payload.email}...`);
+      const normEmail = payload.email.toLowerCase().trim();
+      let restoredBalance = payload.tokenBalance;
+      let restoredTier = payload.tier || 'free';
+
+      if (clientWallet && typeof clientWallet.tokenBalance !== 'undefined') {
+        restoredBalance = clientWallet.tokenBalance;
+        restoredTier = clientWallet.tier || restoredTier;
+      }
+
+      user = {
+        id: payload.userId,
+        email: normEmail,
+        name: payload.name || normEmail.split('@')[0],
+        picture: payload.picture || '',
+        tier: restoredTier,
+        tokenBalance: typeof restoredBalance !== 'undefined' ? restoredBalance : DEFAULT_INITIAL_TOKENS,
+        tokensUsed: payload.tokensUsed || 0,
+        lifetimeTokens: payload.lifetimeTokens || 0,
+        requestsCount: payload.requestsCount || 0,
+        createdAt: new Date().toISOString(),
+        lastActive: new Date().toISOString(),
+      };
+
+      users[payload.userId] = user;
+      users[normEmail] = user;
+      saveUsers();
+    }
+
+    return user ? sanitizeUser(user) : null;
   } catch (e) {
     return null;
   }

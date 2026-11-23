@@ -12,6 +12,12 @@ let serverPort = 3333;
 // User Authentication & Monetization State
 let currentUser = null;
 let sessionToken = localStorage.getItem('jz_session_token') || null;
+try {
+  const cachedUser = localStorage.getItem('jz_user_profile');
+  if (cachedUser) {
+    currentUser = JSON.parse(cachedUser);
+  }
+} catch (e) {}
 let googleClientId = '';
 let availablePlans = [];
 let whatsappAdminNumber = '6281515779040';
@@ -1713,6 +1719,9 @@ const openPricingBtn = document.getElementById('open-pricing-btn');
 const tokenCounterBadge = document.getElementById('token-counter-badge');
 
 function showAuthModal() {
+  // If user is already logged in, do not disturb
+  if (currentUser && sessionToken) return;
+
   if (authModalOverlay) {
     authModalOverlay.classList.add('active');
     renderGoogleButton();
@@ -1790,6 +1799,9 @@ function getCachedUserWallet(email = null) {
 function updateUserState(user) {
   if (!user) return;
   currentUser = user;
+  try {
+    localStorage.setItem('jz_user_profile', JSON.stringify(currentUser));
+  } catch (e) {}
   saveUserWallet(currentUser);
   renderUserNavbar(currentUser);
   updateTokenTicker();
@@ -1847,6 +1859,7 @@ function renderUserNavbar(user) {
 
 function logout() {
   localStorage.removeItem('jz_session_token');
+  localStorage.removeItem('jz_user_profile');
   currentUser = null;
   sessionToken = null;
   renderUserNavbar(null);
@@ -2401,24 +2414,43 @@ async function initAuthCheck() {
     }
   } catch (e) {}
 
+  // If user is already cached in localStorage, immediately show navbar & token (no flicker, no login popup)
+  if (currentUser) {
+    renderUserNavbar(currentUser);
+    updateTokenTicker();
+    updatePricingUserBanner();
+  }
+
   if (sessionToken) {
     try {
-      const meRes = await fetch('/api/auth/me', {
-        headers: { 'Authorization': `Bearer ${sessionToken}` },
-      });
+      const clientWallet = getCachedUserWallet(currentUser?.email);
+      const headers = { 'Authorization': `Bearer ${sessionToken}` };
+      if (clientWallet) {
+        headers['X-Client-Wallet'] = JSON.stringify(clientWallet);
+      }
+      const meRes = await fetch('/api/auth/me', { headers });
       const meData = await meRes.json();
       if (meData.authenticated && meData.user) {
         updateUserState(meData.user);
+        return; // Valid session confirmed by server
+      }
+    } catch (e) {
+      console.warn('Network hiccup during session check:', e);
+      // If network fails or offline, keep cached user logged in
+      if (currentUser) {
+        renderUserNavbar(currentUser);
+        updateTokenTicker();
         return;
       }
-    } catch (e) {}
+    }
   }
 
-  // Not logged in: render button in navbar and prompt login
-  renderUserNavbar(null);
-  updateTokenTicker();
-  // Prompt login modal
-  showAuthModal();
+  // Only if genuinely not logged in (no user profile and no token)
+  if (!currentUser && !sessionToken) {
+    renderUserNavbar(null);
+    updateTokenTicker();
+    showAuthModal();
+  }
 }
 
 // Initialize Application
