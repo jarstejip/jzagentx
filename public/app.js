@@ -31,7 +31,7 @@ let tokenStats = {
 
 const MODEL_CATALOG = {
   CLAUDE: {
-    iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="#CC785C" style="display:inline-block; vertical-align:middle; flex-shrink:0;"><path d="M12 2C12.4 7.2 16.8 11.6 22 12C16.8 12.4 12.4 16.8 12 22C11.6 16.8 7.2 12.4 2 12C7.2 11.6 11.6 7.2 12 2Z"/></svg>`,
+    iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="#CC785C" style="display:inline-block; vertical-align:middle; flex-shrink:0;"><path d="m13.827 2.115 6.957 18.067h-3.044l-1.424-3.79H7.684l-1.424 3.79H3.216L10.173 2.115h3.654zm-.702 3.656h-.25L9.043 14.15h5.914l-3.832-8.38z"/></svg>`,
     provider: 'Anthropic',
     models: ['Claude 3.7 Sonnet', 'Claude 3.5 Sonnet', 'Claude 3.5 Haiku', 'Claude 3 Opus']
   },
@@ -41,7 +41,7 @@ const MODEL_CATALOG = {
     models: ['GPT-4o', 'GPT-4o mini', 'o3-mini', 'o1', 'GPT-4 Turbo']
   },
   GEMINI: {
-    iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="display:inline-block; vertical-align:middle; flex-shrink:0;"><path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" fill="url(#gemini-grad-icon)"/><defs><linearGradient id="gemini-grad-icon" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#4285F4"/><stop offset="50%" stop-color="#9B72CB"/><stop offset="100%" stop-color="#D96570"/></linearGradient></defs></svg>`,
+    iconSvg: `<img src="/gemini-logo.webp" width="18" height="18" style="vertical-align:middle; display:inline-block; object-fit:contain; flex-shrink:0;" alt="Google Gemini">`,
     provider: 'Google',
     models: ['Gemini 2.0 Flash', 'Gemini 1.5 Pro', 'Gemini 1.5 Flash']
   },
