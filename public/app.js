@@ -31,37 +31,37 @@ let tokenStats = {
 
 const MODEL_CATALOG = {
   CLAUDE: {
-    icon: '👑',
+    iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="#CC785C" style="display:inline-block; vertical-align:middle; flex-shrink:0;"><path d="M12 2C12.4 7.2 16.8 11.6 22 12C16.8 12.4 12.4 16.8 12 22C11.6 16.8 7.2 12.4 2 12C7.2 11.6 11.6 7.2 12 2Z"/></svg>`,
     provider: 'Anthropic',
     models: ['Claude 3.7 Sonnet', 'Claude 3.5 Sonnet', 'Claude 3.5 Haiku', 'Claude 3 Opus']
   },
   GPT: {
-    icon: '⚡',
+    iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="#10A37F" style="display:inline-block; vertical-align:middle; flex-shrink:0;"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 8.783a4.485 4.485 0 0 1 2.366-1.973V12.4a.766.766 0 0 0 .388.677l5.815 3.355-2.02 1.168a.076.076 0 0 1-.067 0L4.002 14.94A4.502 4.502 0 0 1 2.34 8.783zm15.746 3.924l-5.843-3.37 2.02-1.168a.076.076 0 0 1 .068 0l4.82 2.782a4.498 4.498 0 0 1-.68 8.013v-5.58a.79.79 0 0 0-.385-.677zm2.327-3.924a4.48 4.48 0 0 1-.535 3.013l-.142-.085-4.783-2.759a.770.770 0 0 0-.78 0L8.83 12.32V9.99a.08.08 0 0 1 .033-.062l4.84-2.79a4.5 4.5 0 0 1 6.364 1.646zM10.74 1.57a4.5 4.5 0 0 1 4.494 4.494v5.583a.795.795 0 0 0 .392.681l4.779 2.758-.141.082a4.476 4.476 0 0 1-6.648-4.223V5.21a.071.071 0 0 0-.038-.052L10.74 1.57zm-.74 9.176l2.02-1.166 2.02 1.166v2.332l-2.02 1.166-2.02-1.166V10.746z"/></svg>`,
     provider: 'OpenAI',
     models: ['GPT-4o', 'GPT-4o mini', 'o3-mini', 'o1', 'GPT-4 Turbo']
   },
   GEMINI: {
-    icon: '💎',
+    iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="display:inline-block; vertical-align:middle; flex-shrink:0;"><path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" fill="url(#gemini-grad-icon)"/><defs><linearGradient id="gemini-grad-icon" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#4285F4"/><stop offset="50%" stop-color="#9B72CB"/><stop offset="100%" stop-color="#D96570"/></linearGradient></defs></svg>`,
     provider: 'Google',
     models: ['Gemini 2.0 Flash', 'Gemini 1.5 Pro', 'Gemini 1.5 Flash']
   },
   DEEPSEEK: {
-    icon: '🐋',
+    iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="display:inline-block; vertical-align:middle; flex-shrink:0;"><path d="M2.5 13C2.5 7.5 7 3.5 13 3.5C18 3.5 21.5 7 21.5 11.5C21.5 15.5 18.5 19 14 19.5L16.5 22L11 20C5.5 19.5 2.5 16.5 2.5 13Z" fill="#1E6FFF"/><circle cx="8.5" cy="11.5" r="1.5" fill="#FFFFFF"/></svg>`,
     provider: 'DeepSeek',
     models: ['DeepSeek-V3', 'DeepSeek-R1']
   },
   GROK: {
-    icon: '💥',
+    iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF" style="display:inline-block; vertical-align:middle; flex-shrink:0;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
     provider: 'xAI',
     models: ['Grok 2', 'Grok 2 Vision']
   },
   LLAMA: {
-    icon: '🦙',
+    iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="display:inline-block; vertical-align:middle; flex-shrink:0;"><path d="M6.88 4C3.84 4 1.5 6.37 1.5 9.77C1.5 14.19 5.56 18.24 9.17 19.78C10.66 20.42 12 19.71 12 19.71C12 19.71 13.34 20.42 14.83 19.78C18.44 18.24 22.5 14.19 22.5 9.77C22.5 6.37 20.16 4 17.12 4C14.7 4 12.87 5.48 12 7.02C11.13 5.48 9.3 4 6.88 4ZM7.14 6.35C8.92 6.35 10.35 7.69 11.08 9.94C9.52 13.56 7.42 16.53 4.8 17.06C3.41 15.93 3.03 13.53 3.03 9.77C3.03 7.82 4.67 6.35 7.14 6.35ZM16.86 6.35C19.33 6.35 20.97 7.82 20.97 9.77C20.97 13.53 20.59 15.93 19.2 17.06C16.58 16.53 14.48 13.56 12.92 9.94C13.65 7.69 15.08 6.35 16.86 6.35Z" fill="url(#meta-grad-icon)"/><defs><linearGradient id="meta-grad-icon" x1="1.5" y1="4" x2="22.5" y2="19.78" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#0081FB"/><stop offset="50%" stop-color="#0064E0"/><stop offset="100%" stop-color="#0081FB"/></linearGradient></defs></svg>`,
     provider: 'Meta',
     models: ['Llama 3.3 70B', 'Llama 3.1 8B']
   },
   QWEN: {
-    icon: '🌐',
+    iconSvg: `<svg width="18" height="18" viewBox="0 0 24 24" fill="#FF6A00" style="display:inline-block; vertical-align:middle; flex-shrink:0;"><path d="M12 2L2 7.5v9L12 22l10-5.5v-9L12 2zm0 2.2l7.8 4.3L12 12.8 4.2 8.5 12 4.2zm-8 6l7 3.8v7.3l-7-3.8V10.2zm9 11.1v-7.3l7-3.8v7.3l-7 3.8z"/></svg>`,
     provider: 'Alibaba',
     models: ['Qwen 2.5 Coder 32B', 'Qwen 2.5 72B']
   }
@@ -943,7 +943,13 @@ function renderModelsCatalog() {
 
     const header = document.createElement('div');
     header.className = 'family-title';
-    header.innerHTML = `<span>${data.icon} ${data.provider || family}</span><span style="font-size:0.75rem; color:#a1a1aa; font-weight:normal;">Genuine AI</span>`;
+    header.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px;">
+        ${data.iconSvg}
+        <span style="font-weight:700; color:#ffffff; font-size:0.92rem;">${data.provider || family}</span>
+      </div>
+      <span style="font-size:0.72rem; color:#a1a1aa; font-weight:normal;">Genuine AI</span>
+    `;
     card.appendChild(header);
 
     data.models.forEach(modName => {
@@ -968,6 +974,10 @@ function renderModelsCatalog() {
 async function selectModel(family, name) {
   activeModel = { family, name };
   document.getElementById('active-model-label').textContent = name;
+  const iconContainer = document.getElementById('active-model-icon');
+  if (iconContainer && MODEL_CATALOG[family]) {
+    iconContainer.innerHTML = MODEL_CATALOG[family].iconSvg;
+  }
   document.getElementById('agent-mini-model').textContent = name;
   closeModelsModal();
   showToast(`Engine real-time dialihkan ke: ${name}`);
