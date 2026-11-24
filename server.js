@@ -1051,5 +1051,13 @@ if (!process.env.VERCEL) {
       console.log(`   Buka http://localhost:${PORT} → klik 🔑 → masukkan API key`);
     }
     console.log(`=======================================================`);
+
+    // Auto-launch Discord Bot if token is set in discord-config.json
+    try {
+      const discordBot = require('./discord-bot');
+      discordBot.startDiscordBot();
+    } catch (e) {
+      console.log('[Discord] Discord Bot Module siap (dapat dijalankan via `node discord-bot.js`).');
+    }
   });
 }

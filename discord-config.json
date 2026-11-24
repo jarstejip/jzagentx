@@ -1,0 +1,8 @@
+{
+  "token": "",
+  "targetChannel": "ai-agent",
+  "defaultModel": "Gemini 2.0 Flash",
+  "unlimitedMode": true,
+  "statusText": "🤖 RPL SERVER | Unlimited AI Code Assistant",
+  "prefix": "!"
+}

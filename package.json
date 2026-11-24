@@ -4,10 +4,14 @@
   "description": "JZAGENTIC - Autonomous AI Agent & IDE Ecosystem Hub",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "discord": "node discord-bot.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "discord.js": "^14.28.1"
+  }
 }
