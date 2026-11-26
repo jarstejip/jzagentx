@@ -875,6 +875,121 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // ===== FIGMA: AVAILABLE MODELS =====
+    if (pathname === '/api/figma/models') {
+      sendJSON(res, 200, {
+        success: true,
+        models: [
+          { name: 'Claude 3.7 Sonnet', family: 'Anthropic', badge: 'Asli' },
+          { name: 'GPT-4o', family: 'OpenAI', badge: 'Asli' },
+          { name: 'Gemini 2.0 Flash', family: 'Google', badge: 'Asli' },
+          { name: 'DeepSeek-V3', family: 'DeepSeek', badge: 'Asli' },
+          { name: 'Claude 3.5 Sonnet', family: 'Anthropic', badge: 'Asli' },
+          { name: 'Grok 2', family: 'xAI', badge: 'Asli' },
+        ]
+      });
+      return;
+    }
+
+    // ===== FIGMA: AI DESIGN GENERATOR =====
+    if (pathname === '/api/figma/generate' && req.method === 'POST') {
+      try {
+        const { prompt: userPrompt, model: requestedModel } = await readBody(req);
+        const modelToUse = requestedModel || activeModel.name;
+
+        const figmaPrompt = `You are the JZAGENTIC Figma Layout Compiler. Output ONLY a valid JSON object representing a Figma design tree for the requested design.
+Design request: "${userPrompt || 'Modern Dark Hero Section'}"
+
+JSON Schema:
+{
+  "type": "FRAME",
+  "name": "DesignRoot",
+  "width": 1120,
+  "height": 520,
+  "cornerRadius": 16,
+  "fills": [{"type": "SOLID", "color": "#0a0a0d"}],
+  "strokes": [{"type": "SOLID", "color": "#252530"}],
+  "strokeWeight": 1,
+  "layoutMode": "VERTICAL",
+  "itemSpacing": 20,
+  "paddingTop": 40, "paddingBottom": 40, "paddingLeft": 40, "paddingRight": 40,
+  "primaryAxisAlignItems": "CENTER",
+  "counterAxisAlignItems": "CENTER",
+  "children": [
+    {
+      "type": "TEXT",
+      "characters": "Headline Text",
+      "fontSize": 36,
+      "fontWeight": "Bold",
+      "color": "#ffffff"
+    },
+    {
+      "type": "TEXT",
+      "characters": "Subheadline description text",
+      "fontSize": 14,
+      "fontWeight": "Regular",
+      "color": "#94a3b8"
+    },
+    {
+      "type": "FRAME",
+      "name": "CTA_Button",
+      "width": 180,
+      "height": 44,
+      "cornerRadius": 8,
+      "fills": [{"type": "SOLID", "color": "#e6c887"}],
+      "layoutMode": "HORIZONTAL",
+      "primaryAxisAlignItems": "CENTER",
+      "counterAxisAlignItems": "CENTER",
+      "children": [
+        {"type": "TEXT", "characters": "Get Started", "fontSize": 13, "fontWeight": "Bold", "color": "#09090c"}
+      ]
+    }
+  ]
+}
+
+DO NOT include any commentary, greetings, markdown fences, or markdown backticks. Output strictly valid JSON only.`;
+
+        const aiMessages = [
+          { role: 'user', content: figmaPrompt }
+        ];
+
+        let rawResponse = '';
+        streamAI(
+          modelToUse,
+          aiMessages,
+          API_CONFIG,
+          (chunk) => { rawResponse += chunk; },
+          () => {
+            let parsedTree = null;
+            try {
+              let clean = rawResponse.trim();
+              if (clean.startsWith('```json')) clean = clean.substring(7);
+              if (clean.startsWith('```')) clean = clean.substring(3);
+              if (clean.endsWith('```')) clean = clean.substring(0, clean.length - 3);
+              clean = clean.trim();
+              parsedTree = JSON.parse(clean);
+            } catch (err) {
+              console.warn('[Figma Generate] AI response parse warning:', err.message);
+            }
+
+            if (parsedTree && parsedTree.type) {
+              sendJSON(res, 200, { success: true, design: parsedTree, modelUsed: modelToUse });
+            } else {
+              sendJSON(res, 200, { success: true, design: null, fallbackNeeded: true, modelUsed: modelToUse });
+            }
+          },
+          (err) => {
+            console.warn('[Figma Generate] AI Stream error, signaling fallback:', err.message);
+            sendJSON(res, 200, { success: true, design: null, fallbackNeeded: true, modelUsed: modelToUse });
+          }
+        );
+      } catch (e) {
+        console.error('[Figma API Error]', e);
+        sendJSON(res, 500, { success: false, error: e.message });
+      }
+      return;
+    }
+
     // ===== FILES =====
     if (pathname === '/api/files') {
       sendJSON(res, 200, { tree: scanDir(WORKSPACE_DIR), workspace: WORKSPACE_DIR });

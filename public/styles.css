@@ -2059,6 +2059,30 @@ body {
   box-shadow: 0 0 16px rgba(245, 158, 11, 0.5);
 }
 
+.figma-btn-pill {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  color: #c7d2fe;
+  border: 1px solid #4338ca;
+  font-weight: 600;
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.25);
+}
+
+.figma-btn-pill:hover {
+  background: #3730a3;
+  color: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px);
+}
+
 .google-login-nav-btn {
   background: #ffffff;
   color: #1f2937;

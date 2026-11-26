@@ -1748,6 +1748,26 @@ if (openPricingBtn) openPricingBtn.addEventListener('click', openPricingModal);
 if (closePricingBtn) closePricingBtn.addEventListener('click', closePricingModal);
 if (tokenCounterBadge) tokenCounterBadge.addEventListener('click', openPricingModal);
 
+// Figma Plugin Modal
+const openFigmaBtn = document.getElementById('open-figma-btn');
+const closeFigmaBtn = document.getElementById('close-figma-btn');
+const figmaModalOverlay = document.getElementById('figma-modal-overlay');
+
+function openFigmaModal() {
+  if (figmaModalOverlay) figmaModalOverlay.classList.add('active');
+}
+function closeFigmaModal() {
+  if (figmaModalOverlay) figmaModalOverlay.classList.remove('active');
+}
+
+if (openFigmaBtn) openFigmaBtn.addEventListener('click', openFigmaModal);
+if (closeFigmaBtn) closeFigmaBtn.addEventListener('click', closeFigmaModal);
+if (figmaModalOverlay) {
+  figmaModalOverlay.addEventListener('click', (e) => {
+    if (e.target === figmaModalOverlay) closeFigmaModal();
+  });
+}
+
 function saveUserWallet(user) {
   if (!user || !user.email) return;
   try {

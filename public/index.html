@@ -55,6 +55,11 @@
           <span id="token-counter-text">🪙 Memuat Token...</span>
         </div>
 
+        <!-- Figma AI Designer Plugin Pill -->
+        <button class="figma-btn-pill" id="open-figma-btn" title="Hubungkan AI ke Figma (Download Plugin)">
+          <span>🎨 Figma AI</span>
+        </button>
+
         <!-- Upgrade VIP Pill -->
         <button class="upgrade-btn-pill" id="open-pricing-btn" title="Beli Kuota Token / Upgrade VIP">
           <span>⭐ Upgrade</span>
@@ -977,6 +982,74 @@ loading...
       </button>
     </div>
   </nav>
+
+  <!-- Figma Plugin Modal Overlay -->
+  <div class="modal-overlay" id="figma-modal-overlay">
+    <div class="models-modal" style="max-width: 680px;">
+      <div class="models-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.3rem;">🎨</span>
+          <div>
+            <h3 style="font-size: 1.05rem; font-weight: 700;">JZAGENTIC Figma AI Designer</h3>
+            <span style="font-size: 0.72rem; color: #a1a1aa;">Native AI Canvas Integration (Claude 3.7 • GPT-4o • Gemini 2.0 • DeepSeek)</span>
+          </div>
+        </div>
+        <button class="icon-btn" id="close-figma-btn" style="font-size: 1.2rem;">✕</button>
+      </div>
+
+      <div style="padding: 24px; overflow-y: auto; max-height: 75vh;">
+        <!-- Banner Showcase -->
+        <div style="background: linear-gradient(135deg, rgba(30, 27, 75, 0.6) 0%, rgba(15, 15, 23, 0.8) 100%); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 18px 20px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <div style="font-weight: 700; font-size: 1rem; color: #e0e7ff; margin-bottom: 4px;">Rancang UI/UX Langsung di Canvas Figma</div>
+            <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.4;">Generate Frame, Auto-Layout, Teks, Shape, & Komponen UI resmi menggunakan AI pilihan Anda.</div>
+          </div>
+          <a href="/jzagentic-figma-plugin.zip" download="jzagentic-figma-plugin.zip" class="chat-send-btn" style="text-decoration: none; padding: 10px 18px; font-size: 0.85rem; font-weight: 700; background: linear-gradient(135deg, #e6c887 0%, #d4af37 100%); color: #000; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+            <span>⬇️</span> Download Plugin (.zip)
+          </a>
+        </div>
+
+        <!-- 3 Simple Steps -->
+        <h4 style="font-size: 0.9rem; font-weight: 600; color: #f4f4f8; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">⚡ Cara Pasang di Figma (15 Detik):</h4>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 16px; display: flex; gap: 14px; align-items: flex-start;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: #4f46e5; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem;">1</div>
+            <div>
+              <div style="font-weight: 600; color: #ffffff; font-size: 0.88rem; margin-bottom: 2px;">Ekstrak File ZIP</div>
+              <div style="font-size: 0.8rem; color: #94a3b8;">Klik tombol download di atas atau gunakan folder lokal di komputer Anda: <code>c:\jzagentic\figma-plugin\</code></div>
+            </div>
+          </div>
+
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 16px; display: flex; gap: 14px; align-items: flex-start;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: #4f46e5; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem;">2</div>
+            <div>
+              <div style="font-weight: 600; color: #ffffff; font-size: 0.88rem; margin-bottom: 2px;">Buka Figma & Import Manifest</div>
+              <div style="font-size: 0.8rem; color: #94a3b8;">Buka Figma Desktop atau Web &gt; Klik Menu Figma (kiri atas) &gt; <strong>Plugins</strong> &gt; <strong>Development</strong> &gt; <strong>Import plugin from manifest...</strong> &gt; Pilih <code>manifest.json</code>.</div>
+            </div>
+          </div>
+
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 16px; display: flex; gap: 14px; align-items: flex-start;">
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: #4f46e5; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem;">3</div>
+            <div>
+              <div style="font-weight: 600; color: #ffffff; font-size: 0.88rem; margin-bottom: 2px;">Jalankan & Mulai Mendesain</div>
+              <div style="font-size: 0.8rem; color: #94a3b8;">Pilih model AI favorit Anda (Claude 3.7, GPT-4o, Gemini Flash), ketik instruksi atau pilih template, lalu klik <strong>Generate ke Canvas Figma</strong>!</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Features Matrix -->
+        <div style="background: rgba(255, 255, 255, 0.02); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.06); padding: 16px;">
+          <div style="font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 8px;">✨ Keunggulan JZAGENTIC Figma Plugin:</div>
+          <ul style="font-size: 0.8rem; color: #94a3b8; line-height: 1.6; padding-left: 20px;">
+            <li><strong>Auto-Layout Asli:</strong> Elemen dibuat menggunakan fitur Auto-Layout Figma resmi yang rapi dan responsif.</li>
+            <li><strong>Zero-Error Engine:</strong> Font loader otomatis (Inter) dan fallback cerdas menjamin desain selalu ter-render tanpa error.</li>
+            <li><strong>Multi-Model:</strong> Terhubung langsung ke cloud JZAGENTIC (Claude 3.7 Sonnet, GPT-4o, Gemini 2.0 Flash, DeepSeek-V3).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Fullscreen Image Preview Lightbox Modal -->
   <div class="image-lightbox-modal" id="image-lightbox-modal" onclick="closeImageLightbox()">
