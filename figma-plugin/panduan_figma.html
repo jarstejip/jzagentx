@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Panduan JZAGENTIC Figma AI Designer</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 10mm 12mm;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background-color: #0b0c10;
+      color: #e2e8f0;
+      line-height: 1.45;
+      font-size: 10pt;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* Page Header */
+    .header-card {
+      background: linear-gradient(135deg, #161622 0%, #0d0d14 100%);
+      border: 1px solid #e6c88744;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 14px;
+    }
+
+    .badge-top {
+      display: inline-block;
+      font-size: 8pt;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      background: rgba(230, 200, 135, 0.15);
+      color: #e6c887;
+      border: 1px solid rgba(230, 200, 135, 0.4);
+      padding: 2px 8px;
+      border-radius: 16px;
+      margin-bottom: 6px;
+    }
+
+    .main-title {
+      font-size: 16pt;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.25;
+      margin-bottom: 4px;
+    }
+
+    .sub-title {
+      font-size: 9.5pt;
+      color: #94a3b8;
+      line-height: 1.35;
+    }
+
+    /* Section Styling */
+    .section-title {
+      font-size: 11.5pt;
+      font-weight: 700;
+      color: #e6c887;
+      border-bottom: 1px solid #242436;
+      padding-bottom: 4px;
+      margin-top: 14px;
+      margin-bottom: 10px;
+    }
+
+    /* Feature Grid */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .card {
+      background: #13131c;
+      border: 1px solid #242434;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+
+    .card h4 {
+      font-size: 9.5pt;
+      color: #ffffff;
+      margin-bottom: 2px;
+      font-weight: 700;
+    }
+
+    .card p {
+      font-size: 8.5pt;
+      color: #94a3b8;
+      margin-bottom: 0;
+      line-height: 1.35;
+    }
+
+    /* Steps */
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 12px;
+      background: #12121a;
+      border: 1px solid #222230;
+      border-radius: 8px;
+      padding: 9px 13px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, #e6c887 0%, #cfa856 100%);
+      color: #0b0c10;
+      font-weight: 800;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9.5pt;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-content h4 {
+      font-size: 9.5pt;
+      color: #ffffff;
+      margin-bottom: 2px;
+      font-weight: 700;
+    }
+
+    .step-content p {
+      font-size: 8.5pt;
+      color: #94a3b8;
+      margin-bottom: 0;
+      line-height: 1.35;
+    }
+
+    .code-pill {
+      background: #1b1b26;
+      color: #e6c887;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: Consolas, monospace;
+      font-size: 8pt;
+      border: 1px solid #323246;
+    }
+
+    /* Page Break */
+    .page-break {
+      page-break-before: always;
+      break-before: page;
+    }
+
+    /* Prompt Box */
+    .prompt-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .prompt-card {
+      background: #101017;
+      border-left: 3px solid #e6c887;
+      border-radius: 0 6px 6px 0;
+      padding: 9px 12px;
+      border-top: 1px solid #1f1f2c;
+      border-right: 1px solid #1f1f2c;
+      border-bottom: 1px solid #1f1f2c;
+    }
+
+    .prompt-label {
+      font-weight: 700;
+      font-size: 9pt;
+      color: #ffffff;
+      margin-bottom: 2px;
+    }
+
+    .prompt-text {
+      color: #94a3b8;
+      font-size: 8pt;
+      line-height: 1.35;
+      font-style: italic;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 16px;
+      border-top: 1px solid #222232;
+      padding-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8pt;
+      color: #64748b;
+    }
+
+    .footer a {
+      color: #e6c887;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== HALAMAN 1 ==================== -->
+
+  <!-- Header Card -->
+  <div class="header-card">
+    <div class="badge-top">JZAGENTIC AI ECOSYSTEM • PANDUAN RESMI</div>
+    <div class="main-title">Panduan Menghubungkan & Menggunakan AI di Figma</div>
+    <div class="sub-title">Cara praktis menghubungkan AI multi-model (Claude 3.7 Sonnet, GPT-4o, Gemini 2.0 Flash, DeepSeek-V3) langsung ke Canvas Figma untuk merakit desain UI/UX dan Auto-Layout otomatis.</div>
+  </div>
+
+  <!-- Keunggulan -->
+  <div class="section-title">✨ Keunggulan JZAGENTIC Figma AI Designer</div>
+  <div class="grid-2">
+    <div class="card">
+      <h4>⚡ Native Auto-Layout Asli</h4>
+      <p>Menghasilkan Frame dan Auto-Layout resmi Figma yang responsif, editable, dan rapi seperti buatan desainer pro.</p>
+    </div>
+    <div class="card">
+      <h4>🤖 Multi-Model AI Power</h4>
+      <p>Bebas memilih model AI unggulan: Claude 3.7, GPT-4o, Gemini 2.0 Flash, hingga DeepSeek-V3 sesuai preferensi Anda.</p>
+    </div>
+    <div class="card">
+      <h4>🛡️ Zero-Error Guarantee</h4>
+      <p>Dilengkapi auto font loader (Inter) & engine anti-crash, menjamin proses render selalu mulus tanpa kendala.</p>
+    </div>
+    <div class="card">
+      <h4>🎯 Akses Instan (Web & Desktop)</h4>
+      <p>Dapat dipakai di aplikasi Figma Desktop maupun Figma versi Browser tanpa perlu instalasi server rumit.</p>
+    </div>
+  </div>
+
+  <!-- Langkah Pemasangan -->
+  <div class="section-title">🚀 Cara Memasang di Figma (Hanya 15 Detik)</div>
+  <div class="step-list">
+    <div class="step-item">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Unduh & Ekstrak File Plugin</h4>
+        <p>Buka website <strong>https://jzagentx.my.id</strong> &gt; klik tombol <strong>"🎨 Figma AI"</strong> di navbar atas untuk mendownload file <span class="code-pill">jzagentic-figma-plugin.zip</span>, lalu ekstrak filenya ke komputer Anda.</p>
+      </div>
+    </div>
+
+    <div class="step-item">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Buka Menu Import Manifest di Figma</h4>
+        <p>Buka aplikasi Figma (Desktop atau Browser) &gt; Buka file desain Anda &gt; Klik <strong>Menu Figma</strong> (logo kiri atas) &gt; Pilih <strong>Plugins</strong> &gt; <strong>Development</strong> &gt; Klik <strong>"Import plugin from manifest..."</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step-item">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Pilih File manifest.json</h4>
+        <p>Pilih file <span class="code-pill">manifest.json</span> dari folder hasil ekstrak tadi. Plugin <strong>JZAGENTIC AI Designer</strong> langsung terpasang dan tersimpan di Figma Anda!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== HALAMAN 2 ==================== -->
+  <div class="page-break"></div>
+
+  <!-- Cara Menggunakan -->
+  <div class="section-title">🎨 Cara Mendesain Menggunakan AI di Canvas</div>
+  <div class="step-list">
+    <div class="step-item">
+      <div class="step-num">A</div>
+      <div class="step-content">
+        <h4>Buka Plugin JZAGENTIC</h4>
+        <p>Di dalam canvas Figma, tekan shortcut <strong>Shift + I</strong> &gt; pilih tab <strong>Plugins</strong> &gt; klik <strong>JZAGENTIC AI Designer</strong> (atau klik kanan di canvas &gt; Plugins &gt; Development &gt; JZAGENTIC AI Designer).</p>
+      </div>
+    </div>
+
+    <div class="step-item">
+      <div class="step-num">B</div>
+      <div class="step-content">
+        <h4>Pilih Model AI Favorit & Masukkan Instruksi</h4>
+        <p>Pilih model AI di dropdown (Claude, GPT, Gemini, DeepSeek). Gunakan <strong>Template Cepat</strong> (Hero Section, Pricing, Mobile Login, Stats) atau ketik prompt kustom sesuai ide Anda.</p>
+      </div>
+    </div>
+
+    <div class="step-item">
+      <div class="step-num">C</div>
+      <div class="step-content">
+        <h4>Klik "Generate ke Canvas Figma"</h4>
+        <p>AI akan langsung merakit Frame, Auto-Layout, Teks, Warna, dan Tombol otomatis tepat di tengah layar canvas Figma Anda!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contoh Prompt -->
+  <div class="section-title">💡 Contoh Prompt Siap Pakai untuk Dicoba</div>
+  <div class="prompt-grid">
+    <div class="prompt-card">
+      <div class="prompt-label">⚡ Modern Hero Section</div>
+      <div class="prompt-text">"Buatkan hero section SaaS modern dengan dark theme, badge AI beraura gold, headline futuristik, 2 tombol CTA, dan rating pelanggan."</div>
+    </div>
+
+    <div class="prompt-card">
+      <div class="prompt-label">💳 Pricing Table Card Set</div>
+      <div class="prompt-text">"3 kartu paket langganan: Free, Pro Developer (badge Most Popular & border emas), dan VIP Unlimited lengkap dengan checklist fitur."</div>
+    </div>
+
+    <div class="prompt-card">
+      <div class="prompt-label">📱 Mobile Login Screen</div>
+      <div class="prompt-text">"Layar login smartphone dark mode dengan logo JZ di bagian atas, form input email dan password yang elegan, tombol Masuk, dan opsi Google."</div>
+    </div>
+
+    <div class="prompt-card">
+      <div class="prompt-label">📊 Dashboard Analytics Widget</div>
+      <div class="prompt-text">"Widget ringkasan analitik AI: Kartu Total Token Digunakan, Requests Aktif hari ini, Response Time, dan status model online."</div>
+    </div>
+  </div>
+
+  <!-- Tips Tambahan -->
+  <div class="section-title">📌 Tips Tambahan untuk Hasil Terbaik</div>
+  <div class="step-list">
+    <div class="step-item">
+      <div class="step-num">💡</div>
+      <div class="step-content">
+        <h4>Hasil Desain 100% Bebas Diedit</h4>
+        <p>Setiap layer yang digenerate oleh AI dapat Anda ubah warna, ukuran font, padding, maupun susunannya menggunakan panel kanan Figma seperti biasa.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div>Website: <a href="https://jzagentx.my.id">https://jzagentx.my.id</a></div>
+    <div>Diterbitkan oleh: <strong>JZAGENTIC Autonomous AI Ecosystem</strong></div>
+    <div>Dokumen Resmi • Format PDF Siap Share WhatsApp</div>
+  </div>
+
+</body>
+</html>
